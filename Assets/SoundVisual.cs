@@ -27,6 +27,7 @@ public class SoundVisual : MonoBehaviour
     private float[] samples;
     private float[] spectrum;
     private float sampleRate;
+    private Camera mainCamera;
 
     private Queue<Transform> leftVisualList;
     private Queue<Transform> rightVisualList;
@@ -35,10 +36,11 @@ public class SoundVisual : MonoBehaviour
     private void Start()
     {
         source = GetComponent<AudioSource>();
+        mainCamera = Camera.main;
         samples = new float[SAMPLE_SIZE];
         spectrum = new float[SAMPLE_SIZE];
         sampleRate = AudioSettings.outputSampleRate;
-        InvokeRepeating("MoveCubes", 0.0f, 0.05f);
+        InvokeRepeating("MoveCubes", 0.0f, 0.01f);
 
         SpawnLine();
     }
@@ -72,6 +74,14 @@ public class SoundVisual : MonoBehaviour
     {
         AnalyseSound();
         UpdateVisual();
+        if (Input.GetKeyDown(KeyCode.A) && (mainCamera.transform.position.x > -3))
+        {
+            mainCamera.transform.position = mainCamera.transform.position + Vector3.left;
+        }
+        if (Input.GetKeyDown(KeyCode.D) && (mainCamera.transform.position.x < 3))
+        {
+            mainCamera.transform.position = mainCamera.transform.position + Vector3.right;
+        }
     }
 
     private void UpdateVisual()
