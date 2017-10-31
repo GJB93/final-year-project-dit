@@ -294,10 +294,10 @@ MonoBehaviour:
   backgroundMaterial: {fileID: 0}
   minColor: {r: 0, g: 0, b: 0, a: 0}
   maxColor: {r: 0, g: 0, b: 0, a: 0}
-  visualModifier: 50
+  visualModifier: 1000
   visualiserSmoothSpeed: 10
   backgroundSmoothSpeed: 0.2
-  keepPercentage: 0.5
+  keepPercentage: 1
   amtVisual: 64
   listenerVolumeValue: 0.5
   sourceVolumeValue: 0.5
@@ -310,7 +310,7 @@ AudioSource:
   m_Enabled: 1
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
-  m_audioClip: {fileID: 8300000, guid: 762472bb65dc51640934a40ebb988814, type: 3}
+  m_audioClip: {fileID: 8300000, guid: dc6ab1758a5dbfd41a620e87829e37ba, type: 3}
   m_PlayOnAwake: 1
   m_Volume: 1
   m_Pitch: 1
