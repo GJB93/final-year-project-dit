@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 /** References: 
@@ -12,6 +13,7 @@ using UnityEngine;
 public class SoundVisual : MonoBehaviour
 {
     private const int SAMPLE_SIZE = 1024;
+    private const int BAND_SIZE = 7;
 
     public float rmsValue;
     public float dbValue;
@@ -22,22 +24,23 @@ public class SoundVisual : MonoBehaviour
     public Color minColor;
     public Color maxColor;
     
-    public float visualModifier = 1000.0f;
-    public float visualiserSmoothSpeed = 10.0f;
+    public float visualModifier = 100.0f;
+    public float risingVisualiserSmoothSpeed = 0.5f;
+    public float fallingVisualiserSmoothSpeed = 0.2f;
     public float backgroundSmoothSpeed = 0.2f;
-    public float keepPercentage = 1.0f;
+    public float keepPercentage = 0.2f;
     public int amtVisual = 7;
     public float listenerVolumeValue = 0.5f;
     public float sourceVolumeValue = 0.5f;
 
     private AudioSource source;
     private float[] samples;
-    private List<List<float>> bands;
+    private List<float> bands;
     private float[] spectrum;
     private float sampleRate;
     private float songMaxFrequency;
     private float hzPerSample;
-
+    private Camera mainCamera;
     private Queue<Transform> leftVisualList;
     private Queue<Transform> rightVisualList;
     private float[] visualScale;
@@ -45,9 +48,10 @@ public class SoundVisual : MonoBehaviour
     private void Start()
     {
         source = GetComponent<AudioSource>();
+        mainCamera = Camera.main;
         samples = new float[SAMPLE_SIZE];
         spectrum = new float[SAMPLE_SIZE];
-        bands = new List<List<float>>();
+        bands = new List<float>();
         sampleRate = AudioSettings.outputSampleRate;
         songMaxFrequency = sampleRate / 2;
         /*
@@ -56,7 +60,7 @@ public class SoundVisual : MonoBehaviour
          */
         hzPerSample = songMaxFrequency / SAMPLE_SIZE;
         Debug.Log(sampleRate);
-        InvokeRepeating("MoveCubes", 0.0f, 0.05f);
+        // InvokeRepeating("MoveCubes", 0.0f, 0.01f);
 
         SpawnLine();
     }
@@ -79,8 +83,8 @@ public class SoundVisual : MonoBehaviour
         {
             GameObject rightGo = GameObject.CreatePrimitive(PrimitiveType.Cube) as GameObject;
             GameObject leftGo = GameObject.CreatePrimitive(PrimitiveType.Cube) as GameObject;
-            rightGo.transform.position = new Vector3(5, 0, i - 10);
-            leftGo.transform.position = new Vector3(-5, 0, i - 10);
+            rightGo.transform.position = new Vector3(5, 0, i);
+            leftGo.transform.position = new Vector3(-5, 0, i);
             rightVisualList.Enqueue(rightGo.transform);
             leftVisualList.Enqueue(leftGo.transform);
         }
@@ -90,30 +94,30 @@ public class SoundVisual : MonoBehaviour
     {
         AnalyseSound();
         UpdateVisual();
+        if (Input.GetKeyDown(KeyCode.A) && (mainCamera.transform.position.x > -3))
+        {
+            mainCamera.transform.position = mainCamera.transform.position + Vector3.left;
+        }
+        if (Input.GetKeyDown(KeyCode.D) && (mainCamera.transform.position.x < 3))
+        {
+            mainCamera.transform.position = mainCamera.transform.position + Vector3.right;
+        }
     }
 
     private void UpdateVisual()
     {
         int visualIndex = 0;
-        int spectrumIndex = 0;
-        int averageSize = (int) ((SAMPLE_SIZE * keepPercentage) / amtVisual);
-
-        while (visualIndex < amtVisual)
+        float risingInterpolater = 0;
+        float fallingInterpolator = 0;
+        float interpolation = 0;
+        foreach(float bandAverage in bands)
         {
-            int j = 0;
-            float sum = 0;
-            while (j < averageSize)
-            {
-                sum += spectrum[spectrumIndex];
-                spectrumIndex++;
-                j++;
-            }
-
-            float scaleY = sum / averageSize * visualModifier;
-            visualScale[visualIndex] -= Time.deltaTime * visualiserSmoothSpeed;
-            if (visualScale[visualIndex] < scaleY)
-                visualScale[visualIndex] = scaleY;
-            
+            float previousScaleY = visualScale[visualIndex];
+            float scaleY = Mathf.Pow(bandAverage, 2) * visualModifier;
+            risingInterpolater += Time.deltaTime * risingVisualiserSmoothSpeed;
+            fallingInterpolator += Time.deltaTime * fallingVisualiserSmoothSpeed;
+            interpolation = scaleY > previousScaleY ? Mathf.Lerp(previousScaleY, scaleY, risingInterpolater) : Mathf.Lerp(previousScaleY, previousScaleY/2, fallingInterpolator);
+            visualScale[visualIndex] = interpolation;
             Transform leftTransform = leftVisualList.Dequeue();
             Transform rightTransform = rightVisualList.Dequeue();
             leftTransform.localScale = Vector3.one + Vector3.up * visualScale[visualIndex];
@@ -135,35 +139,12 @@ public class SoundVisual : MonoBehaviour
     private void AnalyseSound()
     {
         source.GetOutputData(samples, 0);
-
-        GetBands(samples);
-
-        rmsValue = GetRmsValue(samples);
-        dbValue = GetDBValue(rmsValue, 0.1f);
-
-        // Get sound spectrum
         source.GetSpectrumData(spectrum, 0, FFTWindow.BlackmanHarris);
 
-        // Find pitch
-        float maxV = 0;
-        var maxN = 0;
-        for (int i = 0; i < SAMPLE_SIZE; i += 1)
-        {
-            if (!(spectrum[i] > maxV) || !(spectrum[i] > 0.0f))
-                continue;
-
-            maxV = spectrum[i];
-            maxN = i;
-        }
-
-        float freqN = maxN;
-        if (maxN > 0 && maxN < SAMPLE_SIZE - 1)
-        {
-            var dL = spectrum[maxN - 1] / spectrum[maxN];
-            var dR = spectrum[maxN - 1] / spectrum[maxN];
-            freqN += 0.5f * (dR * dR - dL * dL);
-        }
-        pitchValue = freqN * hzPerSample;
+        bands = GetBandAverages(samples);
+        rmsValue = GetRmsValue(samples);
+        dbValue = GetDBValue(rmsValue, 0.1f);
+        pitchValue = GetPitchValue(spectrum);
     }
 
     private float GetRmsValue(float[] samples)
@@ -189,7 +170,31 @@ public class SoundVisual : MonoBehaviour
         return Mathf.Pow(10, (decibelValue/20));
     }
 
-    private void GetBands(float[] samples)
+    private float GetPitchValue(float[] spectrum)
+    {
+        float maxV = 0;
+        var maxN = 0;
+        for (int i = 0; i < SAMPLE_SIZE; i += 1)
+        {
+            if (!(spectrum[i] > maxV) || !(spectrum[i] > 0.0f))
+                continue;
+
+            maxV = spectrum[i];
+            maxN = i;
+        }
+
+        float freqN = maxN;
+        if (maxN > 0 && maxN < SAMPLE_SIZE - 1)
+        {
+            var dL = spectrum[maxN - 1] / spectrum[maxN];
+            var dR = spectrum[maxN - 1] / spectrum[maxN];
+            freqN += 0.5f * (dR * dR - dL * dL);
+        }
+
+        return freqN * hzPerSample;
+    }
+
+    private List<float> GetBandAverages(float[] samples)
     {
         /*
          * Sub-Bass:            20Hz - 60Hz         => 40Hz bandwidth
@@ -200,6 +205,8 @@ public class SoundVisual : MonoBehaviour
          * Presence =           4kHz - 6kHz         => 2kHz bandwidth
          * Brilliance =         6kHz - 20kHz        => 14kHz bandwidth
          */
+
+        List<float> averages = new List<float>();
 
         List<float> subBass       = new List<float>();
         List<float> bass          = new List<float>();
@@ -248,12 +255,15 @@ public class SoundVisual : MonoBehaviour
                 brilliance.Add(samples[sample]);
             }
         }
-        bands.Add(subBass);
-        bands.Add(bass);
-        bands.Add(lowMidrange);
-        bands.Add(midrange);
-        bands.Add(upperMidrange);
-        bands.Add(presence);
-        bands.Add(brilliance);
+
+        averages.Add(subBass.Average());
+        averages.Add(bass.Average());
+        averages.Add(lowMidrange.Average());
+        averages.Add(midrange.Average());
+        averages.Add(upperMidrange.Average());
+        averages.Add(presence.Average());
+        averages.Add(brilliance.Average());
+
+        return averages;
     }
 }
