@@ -2,6 +2,13 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+/** References: 
+ * https://youtu.be/wtXirrO-iNA
+ * https://youtu.be/4Av788P9stk
+ * 
+**/
+
+[RequireComponent (typeof (AudioSource))]
 public class SoundVisual : MonoBehaviour
 {
     private const int SAMPLE_SIZE = 1024;
@@ -19,14 +26,17 @@ public class SoundVisual : MonoBehaviour
     public float visualiserSmoothSpeed = 10.0f;
     public float backgroundSmoothSpeed = 0.2f;
     public float keepPercentage = 1.0f;
-    public int amtVisual = 64;
+    public int amtVisual = 7;
     public float listenerVolumeValue = 0.5f;
     public float sourceVolumeValue = 0.5f;
 
     private AudioSource source;
     private float[] samples;
+    private List<List<float>> bands;
     private float[] spectrum;
     private float sampleRate;
+    private float songMaxFrequency;
+    private float hzPerSample;
 
     private Queue<Transform> leftVisualList;
     private Queue<Transform> rightVisualList;
@@ -37,7 +47,15 @@ public class SoundVisual : MonoBehaviour
         source = GetComponent<AudioSource>();
         samples = new float[SAMPLE_SIZE];
         spectrum = new float[SAMPLE_SIZE];
+        bands = new List<List<float>>();
         sampleRate = AudioSettings.outputSampleRate;
+        songMaxFrequency = sampleRate / 2;
+        /*
+         * Assuming a common song frequency of ~22kHz
+         * 22000 / 1024 = 21.5 Hz a sample
+         */
+        hzPerSample = songMaxFrequency / SAMPLE_SIZE;
+        Debug.Log(sampleRate);
         InvokeRepeating("MoveCubes", 0.0f, 0.05f);
 
         SpawnLine();
@@ -118,6 +136,8 @@ public class SoundVisual : MonoBehaviour
     {
         source.GetOutputData(samples, 0);
 
+        GetBands(samples);
+
         rmsValue = GetRmsValue(samples);
         dbValue = GetDBValue(rmsValue, 0.1f);
 
@@ -143,7 +163,7 @@ public class SoundVisual : MonoBehaviour
             var dR = spectrum[maxN - 1] / spectrum[maxN];
             freqN += 0.5f * (dR * dR - dL * dL);
         }
-        pitchValue = freqN * (sampleRate / 2) / SAMPLE_SIZE;
+        pitchValue = freqN * hzPerSample;
     }
 
     private float GetRmsValue(float[] samples)
@@ -153,18 +173,87 @@ public class SoundVisual : MonoBehaviour
         {
             sum += samples[i] * samples[i];
         }
-        Debug.Log("RMSValue is " + Mathf.Sqrt(sum / SAMPLE_SIZE));
+        // Debug.Log("RMSValue is " + Mathf.Sqrt(sum / SAMPLE_SIZE));
         return Mathf.Sqrt(sum / SAMPLE_SIZE);
     }
 
     private float GetDBValue(float measuredVoltage, float referenceVoltage)
     {
-        Debug.Log("dbValue is " + (20 * Mathf.Log10(rmsValue / 0.1f)));
+        // Debug.Log("dbValue is " + (20 * Mathf.Log10(rmsValue / 0.1f)));
         return 20 * Mathf.Log10(rmsValue / 0.1f);
     }
 
     private float GetVoltageRatio(float decibelValue)
     {
+        Debug.Log("VoltageRatio is " + (Mathf.Pow(10, (decibelValue / 20))));
         return Mathf.Pow(10, (decibelValue/20));
+    }
+
+    private void GetBands(float[] samples)
+    {
+        /*
+         * Sub-Bass:            20Hz - 60Hz         => 40Hz bandwidth
+         * Bass:                60Hz - 250Hz        => 190Hz bandwidth
+         * Low Midrange =       250Hz - 500Hz       => 250Hz bandwidth
+         * Midrange =           500Hz - 2kHz        => 1.5kHz bandwidth
+         * Upper Midrange =     2kHz - 4kHz         => 2kHz bandwidth
+         * Presence =           4kHz - 6kHz         => 2kHz bandwidth
+         * Brilliance =         6kHz - 20kHz        => 14kHz bandwidth
+         */
+
+        List<float> subBass       = new List<float>();
+        List<float> bass          = new List<float>();
+        List<float> lowMidrange   = new List<float>();
+        List<float> midrange      = new List<float>();
+        List<float> upperMidrange = new List<float>();
+        List<float> presence      = new List<float>();
+        List<float> brilliance    = new List<float>();
+
+        int subBassRange          = (int)(40 / hzPerSample);
+        int bassRange             = (int)(190 / hzPerSample) + subBassRange;
+        int lowMidrangeRange      = (int)(250 / hzPerSample) + bassRange;
+        int midrangeRange         = (int)(1500 / hzPerSample) + lowMidrangeRange;
+        int upperMidrangeRange    = (int)(2000 / hzPerSample) + midrangeRange;
+        int presenceRange         = (int)(2000 / hzPerSample) + upperMidrangeRange;
+        int brillianceRange       = (int)(14000 / hzPerSample) + presenceRange;
+
+        for (int sample = 1; sample <= brillianceRange; sample += 1)
+        {
+            if (sample <= subBassRange)
+            {
+                subBass.Add(samples[sample]);
+            }
+            else if (sample > subBassRange && sample <= bassRange)
+            {
+                bass.Add(samples[sample]);
+            }
+            else if (sample > bassRange && sample <= lowMidrangeRange)
+            {
+                lowMidrange.Add(samples[sample]);
+            }
+            else if (sample > lowMidrangeRange && sample <= midrangeRange)
+            {
+                midrange.Add(samples[sample]);
+            }
+            else if (sample > midrangeRange && sample <= upperMidrangeRange)
+            {
+                upperMidrange.Add(samples[sample]);
+            }
+            else if (sample > upperMidrangeRange && sample <= presenceRange)
+            {
+                presence.Add(samples[sample]);
+            }
+            else
+            {
+                brilliance.Add(samples[sample]);
+            }
+        }
+        bands.Add(subBass);
+        bands.Add(bass);
+        bands.Add(lowMidrange);
+        bands.Add(midrange);
+        bands.Add(upperMidrange);
+        bands.Add(presence);
+        bands.Add(brilliance);
     }
 }
