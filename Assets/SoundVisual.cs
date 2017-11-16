@@ -12,7 +12,7 @@ using UnityEngine;
 [RequireComponent (typeof (AudioSource))]
 public class SoundVisual : MonoBehaviour
 {
-    private const int SAMPLE_SIZE = 1024;
+    private const int interval_SIZE = 1024;
     private const int BAND_SIZE = 7;
 
     public float rmsValue;
@@ -34,12 +34,12 @@ public class SoundVisual : MonoBehaviour
     public float sourceVolumeValue = 0.5f;
 
     private AudioSource source;
-    private float[] samples;
+    private float[] intervals;
     private List<float> bands;
     private float[] spectrum;
-    private float sampleRate;
+    private float intervalRate;
     private float songMaxFrequency;
-    private float hzPerSample;
+    private float hzPerInterval;
     private Camera mainCamera;
     private Queue<Transform> leftVisualList;
     private Queue<Transform> rightVisualList;
@@ -49,17 +49,17 @@ public class SoundVisual : MonoBehaviour
     {
         source = GetComponent<AudioSource>();
         mainCamera = Camera.main;
-        samples = new float[SAMPLE_SIZE];
-        spectrum = new float[SAMPLE_SIZE];
+        intervals = new float[interval_SIZE];
+        spectrum = new float[interval_SIZE];
         bands = new List<float>();
-        sampleRate = AudioSettings.outputSampleRate;
-        songMaxFrequency = sampleRate / 2;
+        intervalRate = AudioSettings.outputintervalRate;
+        songMaxFrequency = intervalRate / 2;
         /*
          * Assuming a common song frequency of ~22kHz
-         * 22000 / 1024 = 21.5 Hz a sample
+         * 22000 / 1024 = 21.5 Hz a interval
          */
-        hzPerSample = songMaxFrequency / SAMPLE_SIZE;
-        Debug.Log(sampleRate);
+        hzPerInterval = songMaxFrequency / interval_SIZE;
+        Debug.Log(intervalRate);
         // InvokeRepeating("MoveCubes", 0.0f, 0.01f);
 
         SpawnLine();
@@ -138,24 +138,24 @@ public class SoundVisual : MonoBehaviour
 
     private void AnalyseSound()
     {
-        source.GetOutputData(samples, 0);
+        source.GetOutputData(intervals, 0);
         source.GetSpectrumData(spectrum, 0, FFTWindow.BlackmanHarris);
 
-        bands = GetBandAverages(samples);
-        rmsValue = GetRmsValue(samples);
+        bands = GetBandAverages(intervals);
+        rmsValue = GetRmsValue(intervals);
         dbValue = GetDBValue(rmsValue, 0.1f);
         pitchValue = GetPitchValue(spectrum);
     }
 
-    private float GetRmsValue(float[] samples)
+    private float GetRmsValue(float[] intervals)
     {
         float sum = 0;
-        for (int i = 0; i < SAMPLE_SIZE; i += 1)
+        for (int i = 0; i < interval_SIZE; i += 1)
         {
-            sum += samples[i] * samples[i];
+            sum += intervals[i] * intervals[i];
         }
-        // Debug.Log("RMSValue is " + Mathf.Sqrt(sum / SAMPLE_SIZE));
-        return Mathf.Sqrt(sum / SAMPLE_SIZE);
+        // Debug.Log("RMSValue is " + Mathf.Sqrt(sum / interval_SIZE));
+        return Mathf.Sqrt(sum / interval_SIZE);
     }
 
     private float GetDBValue(float measuredVoltage, float referenceVoltage)
@@ -174,7 +174,7 @@ public class SoundVisual : MonoBehaviour
     {
         float maxV = 0;
         var maxN = 0;
-        for (int i = 0; i < SAMPLE_SIZE; i += 1)
+        for (int i = 0; i < interval_SIZE; i += 1)
         {
             if (!(spectrum[i] > maxV) || !(spectrum[i] > 0.0f))
                 continue;
@@ -184,17 +184,17 @@ public class SoundVisual : MonoBehaviour
         }
 
         float freqN = maxN;
-        if (maxN > 0 && maxN < SAMPLE_SIZE - 1)
+        if (maxN > 0 && maxN < interval_SIZE - 1)
         {
             var dL = spectrum[maxN - 1] / spectrum[maxN];
             var dR = spectrum[maxN - 1] / spectrum[maxN];
             freqN += 0.5f * (dR * dR - dL * dL);
         }
 
-        return freqN * hzPerSample;
+        return freqN * hzPerInterval;
     }
 
-    private List<float> GetBandAverages(float[] samples)
+    private List<float> GetBandAverages(float[] spectrum)
     {
         /*
          * Sub-Bass:            20Hz - 60Hz         => 40Hz bandwidth
@@ -216,43 +216,43 @@ public class SoundVisual : MonoBehaviour
         List<float> presence      = new List<float>();
         List<float> brilliance    = new List<float>();
 
-        int subBassRange          = (int)(40 / hzPerSample);
-        int bassRange             = (int)(190 / hzPerSample) + subBassRange;
-        int lowMidrangeRange      = (int)(250 / hzPerSample) + bassRange;
-        int midrangeRange         = (int)(1500 / hzPerSample) + lowMidrangeRange;
-        int upperMidrangeRange    = (int)(2000 / hzPerSample) + midrangeRange;
-        int presenceRange         = (int)(2000 / hzPerSample) + upperMidrangeRange;
-        int brillianceRange       = (int)(14000 / hzPerSample) + presenceRange;
+        int subBassRange          = (int)(40 / hzPerInterval);
+        int bassRange             = (int)(190 / hzPerInterval) + subBassRange;
+        int lowMidrangeRange      = (int)(250 / hzPerInterval) + bassRange;
+        int midrangeRange         = (int)(1500 / hzPerInterval) + lowMidrangeRange;
+        int upperMidrangeRange    = (int)(2000 / hzPerInterval) + midrangeRange;
+        int presenceRange         = (int)(2000 / hzPerInterval) + upperMidrangeRange;
+        int brillianceRange       = (int)(14000 / hzPerInterval) + presenceRange;
 
-        for (int sample = 1; sample <= brillianceRange; sample += 1)
+        for (int interval = 1; interval <= brillianceRange; interval += 1)
         {
-            if (sample <= subBassRange)
+            if (interval <= subBassRange)
             {
-                subBass.Add(samples[sample]);
+                subBass.Add(intervals[interval]);
             }
-            else if (sample > subBassRange && sample <= bassRange)
+            else if (interval > subBassRange && interval <= bassRange)
             {
-                bass.Add(samples[sample]);
+                bass.Add(intervals[interval]);
             }
-            else if (sample > bassRange && sample <= lowMidrangeRange)
+            else if (interval > bassRange && interval <= lowMidrangeRange)
             {
-                lowMidrange.Add(samples[sample]);
+                lowMidrange.Add(intervals[interval]);
             }
-            else if (sample > lowMidrangeRange && sample <= midrangeRange)
+            else if (interval > lowMidrangeRange && interval <= midrangeRange)
             {
-                midrange.Add(samples[sample]);
+                midrange.Add(intervals[interval]);
             }
-            else if (sample > midrangeRange && sample <= upperMidrangeRange)
+            else if (interval > midrangeRange && interval <= upperMidrangeRange)
             {
-                upperMidrange.Add(samples[sample]);
+                upperMidrange.Add(intervals[interval]);
             }
-            else if (sample > upperMidrangeRange && sample <= presenceRange)
+            else if (interval > upperMidrangeRange && interval <= presenceRange)
             {
-                presence.Add(samples[sample]);
+                presence.Add(intervals[interval]);
             }
             else
             {
-                brilliance.Add(samples[sample]);
+                brilliance.Add(intervals[interval]);
             }
         }
 
