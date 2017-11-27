@@ -108,71 +108,6 @@ NavMeshSettings:
     tileSize: 256
     accuratePlacement: 0
   m_NavMeshData: {fileID: 0}
---- !u!1 &587022630
-GameObject:
-  m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
-  serializedVersion: 5
-  m_Component:
-  - component: {fileID: 587022632}
-  - component: {fileID: 587022631}
-  m_Layer: 0
-  m_Name: Point light
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!108 &587022631
-Light:
-  m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
-  m_GameObject: {fileID: 587022630}
-  m_Enabled: 1
-  serializedVersion: 8
-  m_Type: 2
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_Intensity: 1
-  m_Range: 10
-  m_SpotAngle: 30
-  m_CookieSize: 10
-  m_Shadows:
-    m_Type: 0
-    m_Resolution: -1
-    m_CustomResolution: -1
-    m_Strength: 1
-    m_Bias: 0.05
-    m_NormalBias: 0.4
-    m_NearPlane: 0.2
-  m_Cookie: {fileID: 0}
-  m_DrawHalo: 0
-  m_Flare: {fileID: 0}
-  m_RenderMode: 0
-  m_CullingMask:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_Lightmapping: 4
-  m_AreaSize: {x: 1, y: 1}
-  m_BounceIntensity: 1
-  m_ColorTemperature: 6570
-  m_UseColorTemperature: 0
-  m_ShadowRadius: 0
-  m_ShadowAngle: 0
---- !u!4 &587022632
-Transform:
-  m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
-  m_GameObject: {fileID: 587022630}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 3, z: -10}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_RootOrder: 2
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &735693444
 GameObject:
   m_ObjectHideFlags: 0
@@ -294,13 +229,14 @@ MonoBehaviour:
   backgroundMaterial: {fileID: 0}
   minColor: {r: 0, g: 0, b: 0, a: 0}
   maxColor: {r: 0, g: 0, b: 0, a: 0}
-  visualModifier: 100
-  visualiserSmoothSpeed: 0.5
+  visualModifier: 1000
+  risingVisualiserSmoothSpeed: 0.5
+  fallingVisualiserSmoothSpeed: 0.5
   backgroundSmoothSpeed: 0.2
   keepPercentage: 1
-  amtVisual: 7
-  listenerVolumeValue: 0.5
-  sourceVolumeValue: 0.5
+  listenerVolumeValue: 1
+  sourceVolumeValue: 1
+  cameraMovement: 1
 --- !u!82 &735693452
 AudioSource:
   m_ObjectHideFlags: 0
@@ -310,7 +246,7 @@ AudioSource:
   m_Enabled: 1
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
-  m_audioClip: {fileID: 8300000, guid: 762472bb65dc51640934a40ebb988814, type: 3}
+  m_audioClip: {fileID: 8300000, guid: b63496585a18742429094df243bc7978, type: 3}
   m_PlayOnAwake: 1
   m_Volume: 1
   m_Pitch: 1

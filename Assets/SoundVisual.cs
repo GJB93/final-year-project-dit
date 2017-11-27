@@ -24,14 +24,14 @@ public class SoundVisual : MonoBehaviour
     public Color minColor;
     public Color maxColor;
     
-    public float visualModifier = 100.0f;
+    public float visualModifier = 1000.0f;
     public float risingVisualiserSmoothSpeed = 0.5f;
-    public float fallingVisualiserSmoothSpeed = 0.2f;
+    public float fallingVisualiserSmoothSpeed = 0.5f;
     public float backgroundSmoothSpeed = 0.2f;
-    public float keepPercentage = 0.2f;
-    public int amtVisual = 7;
-    public float listenerVolumeValue = 0.5f;
-    public float sourceVolumeValue = 0.5f;
+    public float keepPercentage = 1.0f;
+    public float listenerVolumeValue = 1.0f;
+    public float sourceVolumeValue = 1.0f;
+    public bool cameraMovement = true;
 
     private AudioSource source;
     private float[] samples;
@@ -41,9 +41,9 @@ public class SoundVisual : MonoBehaviour
     private float songMaxFrequency;
     private float hzPerSample;
     private Camera mainCamera;
-    private Queue<Transform> leftVisualList;
-    private Queue<Transform> rightVisualList;
-    private float[] visualScale;
+    private List<Transform> leftVisualList;
+    private List<Transform> rightVisualList;
+    private float previousScaleY = 0;
 
     private void Start()
     {
@@ -52,6 +52,8 @@ public class SoundVisual : MonoBehaviour
         samples = new float[SAMPLE_SIZE];
         spectrum = new float[SAMPLE_SIZE];
         bands = new List<float>();
+        leftVisualList = new List<Transform>();
+        rightVisualList = new List<Transform>();
         sampleRate = AudioSettings.outputSampleRate;
         songMaxFrequency = sampleRate / 2;
         /*
@@ -60,9 +62,6 @@ public class SoundVisual : MonoBehaviour
          */
         hzPerSample = songMaxFrequency / SAMPLE_SIZE;
         Debug.Log(sampleRate);
-        // InvokeRepeating("MoveCubes", 0.0f, 0.01f);
-
-        SpawnLine();
     }
 
     private void OnGUI()
@@ -73,67 +72,69 @@ public class SoundVisual : MonoBehaviour
         source.volume = sourceVolumeValue;
     }
 
-    private void SpawnLine()
+    private void SpawnCube(float visualScale)
     {
-        visualScale = new float[amtVisual];
-        leftVisualList = new Queue<Transform>();
-        rightVisualList = new Queue<Transform>();
-
-        for (int i = amtVisual - 1; i > -1; i -= 1)
-        {
-            GameObject rightGo = GameObject.CreatePrimitive(PrimitiveType.Cube) as GameObject;
-            GameObject leftGo = GameObject.CreatePrimitive(PrimitiveType.Cube) as GameObject;
-            rightGo.transform.position = new Vector3(5, 0, i);
-            leftGo.transform.position = new Vector3(-5, 0, i);
-            rightVisualList.Enqueue(rightGo.transform);
-            leftVisualList.Enqueue(leftGo.transform);
-        }
+        GameObject rightGo = GameObject.CreatePrimitive(PrimitiveType.Cube) as GameObject;
+        GameObject leftGo = GameObject.CreatePrimitive(PrimitiveType.Cube) as GameObject;
+        rightGo.transform.position = new Vector3(5, 0, 10);
+        leftGo.transform.position = new Vector3(-5, 0, 10);
+        rightGo.transform.localScale = Vector3.one + Vector3.up * visualScale;
+        leftGo.transform.localScale = Vector3.one + Vector3.up * visualScale;
+        rightVisualList.Add(rightGo.transform);
+        leftVisualList.Add(leftGo.transform);
     }
 
     private void Update()
     {
         AnalyseSound();
         UpdateVisual();
+        MoveCubes();
         if (Input.GetKeyDown(KeyCode.A) && (mainCamera.transform.position.x > -3))
         {
-            mainCamera.transform.position = mainCamera.transform.position + Vector3.left;
+            mainCamera.transform.position += Vector3.left;
         }
         if (Input.GetKeyDown(KeyCode.D) && (mainCamera.transform.position.x < 3))
         {
-            mainCamera.transform.position = mainCamera.transform.position + Vector3.right;
+            mainCamera.transform.position += Vector3.right;
+        }
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            cameraMovement = !cameraMovement;
+        }
+        if (!cameraMovement)
+        {
+            mainCamera.transform.position = new Vector3(mainCamera.transform.position.x, 1, mainCamera.transform.position.z);
         }
     }
 
     private void UpdateVisual()
     {
-        int visualIndex = 0;
         float risingInterpolater = 0;
         float fallingInterpolator = 0;
         float interpolation = 0;
-        foreach(float bandAverage in bands)
+        float scaleY = Mathf.Pow(bands.ElementAt(1), 2) * visualModifier;
+        risingInterpolater += Time.deltaTime * risingVisualiserSmoothSpeed;
+        fallingInterpolator += Time.deltaTime * fallingVisualiserSmoothSpeed;
+        interpolation = scaleY > previousScaleY ? Mathf.Lerp(previousScaleY, scaleY, risingInterpolater) : Mathf.Lerp(previousScaleY, previousScaleY/2, fallingInterpolator);
+        SpawnCube(interpolation);
+        if (cameraMovement)
         {
-            float previousScaleY = visualScale[visualIndex];
-            float scaleY = Mathf.Pow(bandAverage, 2) * visualModifier;
-            risingInterpolater += Time.deltaTime * risingVisualiserSmoothSpeed;
-            fallingInterpolator += Time.deltaTime * fallingVisualiserSmoothSpeed;
-            interpolation = scaleY > previousScaleY ? Mathf.Lerp(previousScaleY, scaleY, risingInterpolater) : Mathf.Lerp(previousScaleY, previousScaleY/2, fallingInterpolator);
-            visualScale[visualIndex] = interpolation;
-            Transform leftTransform = leftVisualList.Dequeue();
-            Transform rightTransform = rightVisualList.Dequeue();
-            leftTransform.localScale = Vector3.one + Vector3.up * visualScale[visualIndex];
-            rightTransform.localScale = Vector3.one + Vector3.up * visualScale[visualIndex];
-            leftVisualList.Enqueue(leftTransform);
-            rightVisualList.Enqueue(rightTransform);
-            visualIndex++;
+            mainCamera.transform.position = interpolation > 1 ? new Vector3(mainCamera.transform.position.x, 1 * interpolation, mainCamera.transform.position.z) : new Vector3(mainCamera.transform.position.x, 1, mainCamera.transform.position.z);
         }
+        previousScaleY = interpolation;
     }
 
     private void MoveCubes()
     {
-        Transform currentLeftTransform = leftVisualList.Dequeue();
-        Transform currentRightTransform = rightVisualList.Dequeue();
-        leftVisualList.Enqueue(currentLeftTransform);
-        rightVisualList.Enqueue(currentRightTransform);
+        foreach(Transform cube in rightVisualList)
+        {
+            cube.position += new Vector3(0, 0, -1);
+        }
+
+        foreach (Transform cube in leftVisualList)
+        {
+            cube.position += new Vector3(0, 0, -1);
+        }
     }
 
     private void AnalyseSound()
@@ -141,7 +142,7 @@ public class SoundVisual : MonoBehaviour
         source.GetOutputData(samples, 0);
         source.GetSpectrumData(spectrum, 0, FFTWindow.BlackmanHarris);
 
-        bands = GetBandAverages(samples);
+        bands = GetBandAverages(spectrum);
         rmsValue = GetRmsValue(samples);
         dbValue = GetDBValue(rmsValue, 0.1f);
         pitchValue = GetPitchValue(spectrum);
