@@ -39,7 +39,7 @@ public class SoundVisual : MonoBehaviour
     private float[] spectrum;
     private float sampleRate;
     private float songMaxFrequency;
-    private float hzPerSample;
+    private float hzPerInterval;
     private Camera mainCamera;
     private List<Transform> leftVisualList;
     private List<Transform> rightVisualList;
@@ -58,9 +58,9 @@ public class SoundVisual : MonoBehaviour
         songMaxFrequency = sampleRate / 2;
         /*
          * Assuming a common song frequency of ~22kHz
-         * 22000 / 1024 = 21.5 Hz a sample
+         * 22000 / 1024 = 21.5 Hz a interval
          */
-        hzPerSample = songMaxFrequency / SAMPLE_SIZE;
+        hzPerInterval = songMaxFrequency / SAMPLE_SIZE;
         Debug.Log(sampleRate);
     }
 
@@ -192,10 +192,10 @@ public class SoundVisual : MonoBehaviour
             freqN += 0.5f * (dR * dR - dL * dL);
         }
 
-        return freqN * hzPerSample;
+        return freqN * hzPerInterval;
     }
 
-    private List<float> GetBandAverages(float[] samples)
+    private List<float> GetBandAverages(float[] spectrum)
     {
         /*
          * Sub-Bass:            20Hz - 60Hz         => 40Hz bandwidth
@@ -217,43 +217,43 @@ public class SoundVisual : MonoBehaviour
         List<float> presence      = new List<float>();
         List<float> brilliance    = new List<float>();
 
-        int subBassRange          = (int)(40 / hzPerSample);
-        int bassRange             = (int)(190 / hzPerSample) + subBassRange;
-        int lowMidrangeRange      = (int)(250 / hzPerSample) + bassRange;
-        int midrangeRange         = (int)(1500 / hzPerSample) + lowMidrangeRange;
-        int upperMidrangeRange    = (int)(2000 / hzPerSample) + midrangeRange;
-        int presenceRange         = (int)(2000 / hzPerSample) + upperMidrangeRange;
-        int brillianceRange       = (int)(14000 / hzPerSample) + presenceRange;
+        int subBassRange          = (int)(40 / hzPerInterval);
+        int bassRange             = (int)(190 / hzPerInterval) + subBassRange;
+        int lowMidrangeRange      = (int)(250 / hzPerInterval) + bassRange;
+        int midrangeRange         = (int)(1500 / hzPerInterval) + lowMidrangeRange;
+        int upperMidrangeRange    = (int)(2000 / hzPerInterval) + midrangeRange;
+        int presenceRange         = (int)(2000 / hzPerInterval) + upperMidrangeRange;
+        int brillianceRange       = (int)(14000 / hzPerInterval) + presenceRange;
 
-        for (int sample = 1; sample <= brillianceRange; sample += 1)
+        for (int interval = 1; interval <= brillianceRange; interval += 1)
         {
-            if (sample <= subBassRange)
+            if (interval <= subBassRange)
             {
-                subBass.Add(samples[sample]);
+                subBass.Add(spectrum[interval]);
             }
-            else if (sample > subBassRange && sample <= bassRange)
+            else if (interval > subBassRange && interval <= bassRange)
             {
-                bass.Add(samples[sample]);
+                bass.Add(spectrum[interval]);
             }
-            else if (sample > bassRange && sample <= lowMidrangeRange)
+            else if (interval > bassRange && interval <= lowMidrangeRange)
             {
-                lowMidrange.Add(samples[sample]);
+                lowMidrange.Add(spectrum[interval]);
             }
-            else if (sample > lowMidrangeRange && sample <= midrangeRange)
+            else if (interval > lowMidrangeRange && interval <= midrangeRange)
             {
-                midrange.Add(samples[sample]);
+                midrange.Add(spectrum[interval]);
             }
-            else if (sample > midrangeRange && sample <= upperMidrangeRange)
+            else if (interval > midrangeRange && interval <= upperMidrangeRange)
             {
-                upperMidrange.Add(samples[sample]);
+                upperMidrange.Add(spectrum[interval]);
             }
-            else if (sample > upperMidrangeRange && sample <= presenceRange)
+            else if (interval > upperMidrangeRange && interval <= presenceRange)
             {
-                presence.Add(samples[sample]);
+                presence.Add(spectrum[interval]);
             }
             else
             {
-                brilliance.Add(samples[sample]);
+                brilliance.Add(spectrum[interval]);
             }
         }
 
