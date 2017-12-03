@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-/** References: 
+/** Used Tutorial References: 
  * https://youtu.be/wtXirrO-iNA
  * https://youtu.be/4Av788P9stk
  * 
@@ -37,12 +37,14 @@ public class SoundVisual : MonoBehaviour
     private float[] samples;
     private List<float> bands;
     private float[] spectrum;
+    private float[] eqBandPreviousY;
     private float sampleRate;
     private float songMaxFrequency;
     private float hzPerInterval;
     private Camera mainCamera;
     private List<Transform> leftVisualList;
     private List<Transform> rightVisualList;
+    private List<Transform> eqBandVisuals;
     private float previousScaleY = 0;
 
     private void Start()
@@ -51,9 +53,11 @@ public class SoundVisual : MonoBehaviour
         mainCamera = Camera.main;
         samples = new float[SAMPLE_SIZE];
         spectrum = new float[SAMPLE_SIZE];
+        eqBandPreviousY = new float[BAND_SIZE];
         bands = new List<float>();
         leftVisualList = new List<Transform>();
         rightVisualList = new List<Transform>();
+        eqBandVisuals = new List<Transform>();
         sampleRate = AudioSettings.outputSampleRate;
         songMaxFrequency = sampleRate / 2;
         /*
@@ -62,6 +66,7 @@ public class SoundVisual : MonoBehaviour
          */
         hzPerInterval = songMaxFrequency / SAMPLE_SIZE;
         Debug.Log(sampleRate);
+        SpawnEQLine();
     }
 
     private void OnGUI()
@@ -84,9 +89,36 @@ public class SoundVisual : MonoBehaviour
         leftVisualList.Add(leftGo.transform);
     }
 
+    private void SpawnEQLine()
+    {
+        for(int i=0; i<BAND_SIZE; i+=1)
+        {
+            GameObject eqGo = GameObject.CreatePrimitive(PrimitiveType.Cube) as GameObject;
+            eqGo.transform.position = new Vector3(i-3, 0, 10);
+            eqBandVisuals.Add(eqGo.transform);
+        }
+    }
+
+    private void UpdateEQLineVisuals()
+    {
+        for(int i=0; i<eqBandVisuals.Count; i+=1)
+        {
+            float risingInterpolater = 0;
+            float fallingInterpolator = 0;
+            float interpolation = 0;
+            float scaleY = Mathf.Pow(bands.ElementAt(i), 2) * visualModifier;
+            risingInterpolater += Time.deltaTime * risingVisualiserSmoothSpeed;
+            fallingInterpolator += Time.deltaTime * fallingVisualiserSmoothSpeed;
+            interpolation = scaleY > eqBandPreviousY[i] ? Mathf.Lerp(eqBandPreviousY[i], scaleY, risingInterpolater) : Mathf.Lerp(eqBandPreviousY[i], eqBandPreviousY[i] / 2, fallingInterpolator);
+            eqBandVisuals.ElementAt(i).transform.localScale = Vector3.one + Vector3.up * interpolation;
+            eqBandPreviousY[i] = interpolation;
+        }
+    }
+
     private void Update()
     {
         AnalyseSound();
+        UpdateEQLineVisuals();
         UpdateVisual();
         MoveCubes();
         if (Input.GetKeyDown(KeyCode.A) && (mainCamera.transform.position.x > -3))
@@ -119,7 +151,9 @@ public class SoundVisual : MonoBehaviour
         SpawnCube(interpolation);
         if (cameraMovement)
         {
-            mainCamera.transform.position = interpolation > 1 ? new Vector3(mainCamera.transform.position.x, 1 * interpolation, mainCamera.transform.position.z) : new Vector3(mainCamera.transform.position.x, 1, mainCamera.transform.position.z);
+            mainCamera.transform.position = interpolation > 1 ? 
+                new Vector3(mainCamera.transform.position.x, 1 * interpolation, mainCamera.transform.position.z) : 
+                new Vector3(mainCamera.transform.position.x, 1, mainCamera.transform.position.z);
         }
         previousScaleY = interpolation;
     }
@@ -148,6 +182,11 @@ public class SoundVisual : MonoBehaviour
         pitchValue = GetPitchValue(spectrum);
     }
 
+    /**
+     * The following three functions, (GetRmsValue, GetDBValue and GetPitchValue) 
+     * are written with reference to code snippets found at this link: 
+     * https://answers.unity.com/questions/157940/getoutputdata-and-getspectrumdata-they-represent-t.html
+    **/
     private float GetRmsValue(float[] samples)
     {
         float sum = 0;
@@ -155,20 +194,12 @@ public class SoundVisual : MonoBehaviour
         {
             sum += samples[i] * samples[i];
         }
-        // Debug.Log("RMSValue is " + Mathf.Sqrt(sum / SAMPLE_SIZE));
         return Mathf.Sqrt(sum / SAMPLE_SIZE);
     }
 
     private float GetDBValue(float measuredVoltage, float referenceVoltage)
     {
-        // Debug.Log("dbValue is " + (20 * Mathf.Log10(rmsValue / 0.1f)));
         return 20 * Mathf.Log10(rmsValue / 0.1f);
-    }
-
-    private float GetVoltageRatio(float decibelValue)
-    {
-        Debug.Log("VoltageRatio is " + (Mathf.Pow(10, (decibelValue / 20))));
-        return Mathf.Pow(10, (decibelValue/20));
     }
 
     private float GetPitchValue(float[] spectrum)
@@ -193,6 +224,15 @@ public class SoundVisual : MonoBehaviour
         }
 
         return freqN * hzPerInterval;
+    }
+    /**
+     *  End of code snippet https://answers.unity.com/questions/157940/getoutputdata-and-getspectrumdata-they-represent-t.html
+    **/
+
+    private float GetVoltageRatio(float decibelValue)
+    {
+        Debug.Log("VoltageRatio is " + (Mathf.Pow(10, (decibelValue / 20))));
+        return Mathf.Pow(10, (decibelValue / 20));
     }
 
     private List<float> GetBandAverages(float[] spectrum)
