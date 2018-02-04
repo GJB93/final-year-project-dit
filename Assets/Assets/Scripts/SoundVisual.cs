@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System;
 using UnityEngine;
 
 /** Used Tutorial References: 
@@ -46,6 +47,7 @@ public class SoundVisual : MonoBehaviour
     private List<Transform> rightVisualList;
     private List<Transform> eqBandVisuals;
     private float previousScaleY = 0;
+    private float[] instantEnergyHistory;
 
     private void Start()
     {
@@ -65,6 +67,7 @@ public class SoundVisual : MonoBehaviour
          * 22000 / 1024 = 21.5 Hz a interval
          */
         hzPerInterval = songMaxFrequency / SAMPLE_SIZE;
+        instantEnergyHistory = new float[SAMPLE_SIZE];
         Debug.Log(sampleRate);
         //SpawnEQLine();
     }
@@ -119,7 +122,19 @@ public class SoundVisual : MonoBehaviour
     */
     private void Update()
     {
-        AnalyseSound();
+        float[] rightChannel = new float[SAMPLE_SIZE];
+        float[] leftChannel = new float[SAMPLE_SIZE];
+        source.GetSpectrumData(rightChannel, 0, FFTWindow.BlackmanHarris);
+        source.GetSpectrumData(leftChannel, 1, FFTWindow.BlackmanHarris);
+        float instantEnergy = 0;
+
+        for (int i = 0; i < rightChannel.Length; i += 1)
+        {
+            instantEnergy = (rightChannel[i] * rightChannel[i]) + (leftChannel[i] * leftChannel[i]);
+        }
+        Debug.Log(instantEnergy);
+        CheckForBeat();
+        //AnalyseSound();
         /*
         UpdateEQLineVisuals();
         UpdateVisual();
@@ -311,5 +326,28 @@ public class SoundVisual : MonoBehaviour
         averages.Add(brilliance.Average());
 
         return averages;
+    }
+
+    void CheckForBeat()
+    {
+        float[] rightChannel = new float[SAMPLE_SIZE];
+        float[] leftChannel = new float[SAMPLE_SIZE];
+        source.GetSpectrumData(rightChannel, 0, FFTWindow.BlackmanHarris);
+        source.GetSpectrumData(leftChannel, 1, FFTWindow.BlackmanHarris);
+
+        float instantEnergy = AudioAnalyser.GetInstantEnergy(rightChannel, leftChannel);
+        float localAverageEnergy = AudioAnalyser.GetLocalAverageEnergy(instantEnergyHistory);
+        float variance = AudioAnalyser.GetEnergyVariance(instantEnergyHistory, localAverageEnergy);
+        float constant = AudioAnalyser.GetEnergyFormulaConstant(variance);
+        float[] shiftArray = new float[instantEnergyHistory.Length];
+
+        Array.Copy(instantEnergyHistory, 0, shiftArray, 1, instantEnergyHistory.Length - 1);
+        shiftArray[0] = instantEnergy;
+        Array.Copy(shiftArray, instantEnergyHistory, shiftArray.Length);
+        Debug.Log(instantEnergyHistory[0]);
+        if (instantEnergy > (constant * localAverageEnergy))
+        {
+            Debug.Log("Beat Detected");
+        }
     }
 }
