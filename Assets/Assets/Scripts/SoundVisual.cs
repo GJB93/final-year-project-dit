@@ -48,6 +48,7 @@ public class SoundVisual : MonoBehaviour
     private List<Transform> eqBandVisuals;
     private float previousScaleY = 0;
     private float[] instantEnergyHistory;
+    private int beatCount = 0;
 
     private void Start()
     {
@@ -69,6 +70,7 @@ public class SoundVisual : MonoBehaviour
         hzPerInterval = songMaxFrequency / SAMPLE_SIZE;
         instantEnergyHistory = new float[SAMPLE_SIZE];
         Debug.Log(sampleRate);
+        StartCoroutine(GetBpm());
         //SpawnEQLine();
     }
 
@@ -122,17 +124,6 @@ public class SoundVisual : MonoBehaviour
     */
     private void Update()
     {
-        float[] rightChannel = new float[SAMPLE_SIZE];
-        float[] leftChannel = new float[SAMPLE_SIZE];
-        source.GetSpectrumData(rightChannel, 0, FFTWindow.BlackmanHarris);
-        source.GetSpectrumData(leftChannel, 1, FFTWindow.BlackmanHarris);
-        float instantEnergy = 0;
-
-        for (int i = 0; i < rightChannel.Length; i += 1)
-        {
-            instantEnergy = (rightChannel[i] * rightChannel[i]) + (leftChannel[i] * leftChannel[i]);
-        }
-        Debug.Log(instantEnergy);
         CheckForBeat();
         //AnalyseSound();
         /*
@@ -330,10 +321,12 @@ public class SoundVisual : MonoBehaviour
 
     void CheckForBeat()
     {
+        GameObject beatCube = GameObject.FindGameObjectWithTag("Beat Cube");
+        Renderer cubeRend = beatCube.GetComponent<Renderer>();
         float[] rightChannel = new float[SAMPLE_SIZE];
         float[] leftChannel = new float[SAMPLE_SIZE];
-        source.GetSpectrumData(rightChannel, 0, FFTWindow.BlackmanHarris);
-        source.GetSpectrumData(leftChannel, 1, FFTWindow.BlackmanHarris);
+        source.GetOutputData(rightChannel, 0);
+        source.GetOutputData(leftChannel, 1);
 
         float instantEnergy = AudioAnalyser.GetInstantEnergy(rightChannel, leftChannel);
         float localAverageEnergy = AudioAnalyser.GetLocalAverageEnergy(instantEnergyHistory);
@@ -344,10 +337,24 @@ public class SoundVisual : MonoBehaviour
         Array.Copy(instantEnergyHistory, 0, shiftArray, 1, instantEnergyHistory.Length - 1);
         shiftArray[0] = instantEnergy;
         Array.Copy(shiftArray, instantEnergyHistory, shiftArray.Length);
-        Debug.Log(instantEnergyHistory[0]);
-        if (instantEnergy > (constant * localAverageEnergy))
+        float beatEnergyTarget = constant * localAverageEnergy;
+        Debug.Log("Instant Energy: " + instantEnergyHistory[0] + "\nAverage Energy: " + localAverageEnergy + "\nEnergy Constant: " + constant +  "\nBeat target: " + beatEnergyTarget);
+        if (instantEnergy > beatEnergyTarget)
         {
             Debug.Log("Beat Detected");
+            cubeRend.material.color = Color.green;
+            beatCount += 1;
         }
+        else
+        {
+            cubeRend.material.color = Color.red;
+        }
+    }
+
+    IEnumerator GetBpm()
+    {
+        yield return new WaitForSeconds(15);
+        Debug.Log("Beat Count: " + beatCount + "\nSBPM: " + beatCount * 4);
+        beatCount = 0;
     }
 }

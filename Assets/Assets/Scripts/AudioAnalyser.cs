@@ -70,7 +70,6 @@ public static class AudioAnalyser {
         {
             instantEnergy = (rightChannel[i] * rightChannel[i]) + (leftChannel[i] * leftChannel[i]);
         }
-        Debug.Log(instantEnergy);
         return instantEnergy;
     }
 
@@ -100,7 +99,7 @@ public static class AudioAnalyser {
 
     public static float GetEnergyFormulaConstant(float variance)
     {
-        return (-0.0025714f * variance) + 1.5142857f;
+        return (-0.0025714f * variance) + 100.0f;
     }
 
     public static float GetVoltageRatio(float decibelValue)
