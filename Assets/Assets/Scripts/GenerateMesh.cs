@@ -58,7 +58,6 @@ public class GenerateMesh : MonoBehaviour {
                 {
                     vertices[vertexCount] = new Vector3(x, height, z);
                 }
-                Debug.Log(vertexCount);
                 vertexCount += 1;
             }
         }

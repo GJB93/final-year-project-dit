@@ -124,7 +124,7 @@ public class SoundVisual : MonoBehaviour
     */
     private void Update()
     {
-        CheckForBeat();
+        //CheckForBeat();
         //AnalyseSound();
         /*
         UpdateEQLineVisuals();
@@ -328,6 +328,9 @@ public class SoundVisual : MonoBehaviour
         source.GetOutputData(rightChannel, 0);
         source.GetOutputData(leftChannel, 1);
 
+        rightChannel = FastFourierTransform.FftMag(rightChannel);
+        leftChannel = FastFourierTransform.FftMag(leftChannel);
+
         float instantEnergy = AudioAnalyser.GetInstantEnergy(rightChannel, leftChannel);
         float localAverageEnergy = AudioAnalyser.GetLocalAverageEnergy(instantEnergyHistory);
         float variance = AudioAnalyser.GetEnergyVariance(instantEnergyHistory, localAverageEnergy);
@@ -354,7 +357,7 @@ public class SoundVisual : MonoBehaviour
     IEnumerator GetBpm()
     {
         yield return new WaitForSeconds(15);
-        Debug.Log("Beat Count: " + beatCount + "\nSBPM: " + beatCount * 4);
+        Debug.Log("Beat Count: " + beatCount + "\nBPM: " + beatCount * 4);
         beatCount = 0;
     }
 }
