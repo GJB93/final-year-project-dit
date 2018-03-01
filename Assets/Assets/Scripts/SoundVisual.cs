@@ -38,6 +38,7 @@ public class SoundVisual : MonoBehaviour
     private float[] samples;
     private List<float> bands;
     private float[] spectrum;
+    private List<float[]> songSpectra;
     private float[] eqBandPreviousY;
     private float sampleRate;
     private float songMaxFrequency;
@@ -49,10 +50,12 @@ public class SoundVisual : MonoBehaviour
     private float previousScaleY = 0;
     private float[] instantEnergyHistory;
     private int beatCount = 0;
+    private AudioPreprocessor preprocessor;
 
     private void Start()
     {
         source = GetComponent<AudioSource>();
+        preprocessor = GetComponent<AudioPreprocessor>();
         mainCamera = Camera.main;
         samples = new float[SAMPLE_SIZE];
         spectrum = new float[SAMPLE_SIZE];
@@ -71,6 +74,7 @@ public class SoundVisual : MonoBehaviour
         instantEnergyHistory = new float[SAMPLE_SIZE];
         Debug.Log(sampleRate);
         StartCoroutine(GetBpm());
+        songSpectra = preprocessor.ProcessSong(source.clip);
         //SpawnEQLine();
     }
 

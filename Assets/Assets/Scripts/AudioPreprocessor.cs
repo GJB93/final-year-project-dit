@@ -18,17 +18,8 @@ public class AudioPreprocessor : MonoBehaviour {
     private int windowTimeSlice;
     private int lastWindowSize;
     private int songLength;
-
-	// Use this for initialization
-	void Awake () {
-        rightSampleWindows = new List<float[]>();
-        leftSampleWindows = new List<float[]>();
-        source = this.gameObject.GetComponent<AudioSource>();
-        if (source == null)
-        {
-            this.gameObject.AddComponent<AudioSource>();
-        }
-        song = source.clip;
+    
+	public List<float[]> ProcessSong (AudioClip song) {
         stereoSampleSize = song.samples * song.channels;
         windowIterations = Mathf.FloorToInt(song.samples / windowInterval);
         lastWindowSize = song.samples - (windowIterations * windowInterval);
@@ -39,7 +30,7 @@ public class AudioPreprocessor : MonoBehaviour {
         rightSamples = new float[song.samples];
         leftSamples = new float[song.samples];
         spectra = new List<float[]>(windowIterations + 1);
-        Debug.Log("Clip sample size: " + samples.Length
+        Debug.Log("Clip sample size: " + song.samples
             + "\nSample size vs Window Interval: " + (windowIterations * windowInterval)
             + "\nSong length: " + (songLength / 60) + "m" + (songLength % 60) + "s"
             + "\nWindow Slice: " + windowTimeSlice);
@@ -54,7 +45,7 @@ public class AudioPreprocessor : MonoBehaviour {
         {
             float[] tempRight = new float[windowInterval];
             float[] tempLeft = new float[windowInterval];
-            if (i <= windowIterations)
+            if (i < windowIterations)
             {
                 for (int j = 0; j < windowInterval; j += 1)
                 {
@@ -72,10 +63,7 @@ public class AudioPreprocessor : MonoBehaviour {
             }
             spectra.Add(FastFourierTransform.FftMag(tempRight));
         }
-	}
-	
-	// Update is called once per frame
-	void Update () {
-		
+
+        return spectra;
 	}
 }
