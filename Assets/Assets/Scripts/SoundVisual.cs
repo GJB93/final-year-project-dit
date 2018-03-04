@@ -80,8 +80,11 @@ public class SoundVisual : MonoBehaviour
         Debug.Log(sampleRate);
         StartCoroutine(GetBpm());
         songBeats = preprocessor.ProcessSong(source.clip);
+        Debug.Log("Length of beats array " + songBeats.Length);
+        Debug.Log("Song length using length of beat array times window length: " + Mathf.FloorToInt(preprocessor.WindowPositionToTime(songBeats.Length) / 60) + "m" + Mathf.FloorToInt(preprocessor.WindowPositionToTime(songBeats.Length) % 60) + "s");
         source.Play();
         StartCoroutine(GetCurrentWindowPosition(preprocessor.windowTimeSlice));
+        Debug.Log(preprocessor.TimeToWindowAmount(5.0f));
         //SpawnEQLine();
     }
 
@@ -135,20 +138,20 @@ public class SoundVisual : MonoBehaviour
     */
     private void Update()
     {
-        if(songBeats[windowNumber + 10] == 1 && (windowNumber + 10) != previouslyActivatedWindow)
+        if(songBeats[windowNumber] == 1 && windowNumber != previouslyActivatedWindow)
         {
             Debug.Log(windowNumber);
             GameObject temp = GameObject.CreatePrimitive(PrimitiveType.Cube) as GameObject;
             temp.transform.position = new Vector3(0, 0, 10);
             beatCubes.Add(temp);
             canSpawn = false;
-            previouslyActivatedWindow = windowNumber + 10;
+            previouslyActivatedWindow = windowNumber;
             StartCoroutine(WaitForNextSpawn());
         }
-        foreach(GameObject beatCube in beatCubes)
+        /*foreach(GameObject beatCube in beatCubes)
         {
             beatCube.transform.Translate(Vector3.back);
-        }
+        }*/
         //CheckForBeat();
         //AnalyseSound();
         /*
@@ -388,10 +391,10 @@ public class SoundVisual : MonoBehaviour
 
     IEnumerator GetCurrentWindowPosition(float time)
     {
-        Debug.Log("Incrementing window position");
+        Debug.Log("Incrementing window position every " + time + "s");
         while (true)
         {
-            yield return new WaitForSeconds(0.0476f);
+            yield return new WaitForSeconds(time);
             windowNumber += 1;
         }
     }

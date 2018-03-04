@@ -18,7 +18,7 @@ public class AudioPreprocessor : MonoBehaviour {
     private int stereoSampleSize;
     public int windowInterval = 2048;
     private int windowIterations;
-    public int windowTimeSlice;
+    public float windowTimeSlice;
     private int lastWindowSize;
     private int songLength;
     private float[] instantEnergyHistory;
@@ -29,7 +29,7 @@ public class AudioPreprocessor : MonoBehaviour {
         lastWindowSize = song.samples - (windowIterations * windowInterval);
         Debug.Log("Window Iterations: " + windowIterations + "\nLast Window Size: " + lastWindowSize);
         songLength = song.samples / song.frequency;
-        windowTimeSlice = song.frequency / windowInterval;
+        windowTimeSlice = 1.0f / (song.frequency / windowInterval);
         samples = new float[stereoSampleSize];
         rightSamples = new float[song.samples];
         leftSamples = new float[song.samples];
@@ -39,7 +39,7 @@ public class AudioPreprocessor : MonoBehaviour {
         Debug.Log("Clip sample size: " + song.samples
             + "\nSample size vs Window Interval: " + (windowIterations * windowInterval)
             + "\nSong length: " + (songLength / 60) + "m" + (songLength % 60) + "s"
-            + "\nWindow Slice: " + windowTimeSlice);
+            + "\nWindow Slice: " + windowTimeSlice + "s");
         song.GetData(samples, 0);
         for (int i = 0; i < rightSamples.Length; i += 1)
         {
@@ -88,11 +88,21 @@ public class AudioPreprocessor : MonoBehaviour {
         shiftArray[0] = instantEnergy;
         Array.Copy(shiftArray, instantEnergyHistory, shiftArray.Length);
         float beatEnergyTarget = constant * localAverageEnergy;
-        Debug.Log("Instant Energy: " + instantEnergyHistory[0] + "\nAverage Energy: " + localAverageEnergy + "\nEnergy Constant: " + constant + "\nBeat target: " + beatEnergyTarget);
+        //Debug.Log("Instant Energy: " + instantEnergyHistory[0] + "\nAverage Energy: " + localAverageEnergy + "\nEnergy Constant: " + constant + "\nBeat target: " + beatEnergyTarget);
         if (instantEnergy > beatEnergyTarget && instantEnergy > Mathf.Epsilon)
         {
             return true;
         }
         return false;
+    }
+
+    public float WindowPositionToTime(int pos)
+    {
+        return pos * windowTimeSlice;
+    }
+
+    public int TimeToWindowAmount(float time)
+    {
+        return Mathf.CeilToInt(time / windowTimeSlice);
     }
 }
