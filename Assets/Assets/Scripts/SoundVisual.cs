@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System;
+using System.Diagnostics;
 using UnityEngine;
 
 /** Used Tutorial References: 
@@ -55,9 +56,11 @@ public class SoundVisual : MonoBehaviour
     private AudioPreprocessor preprocessor;
     private bool canSpawn = true;
     private int previouslyActivatedWindow;
+    private Stopwatch stopwatch;
 
     private void Start()
     {
+        stopwatch = new Stopwatch();
         beatCubes = new List<GameObject>();
         source = GetComponent<AudioSource>();
         preprocessor = GetComponent<AudioPreprocessor>();
@@ -77,14 +80,15 @@ public class SoundVisual : MonoBehaviour
          */
         hzPerInterval = songMaxFrequency / SAMPLE_SIZE;
         instantEnergyHistory = new float[SAMPLE_SIZE];
-        Debug.Log(sampleRate);
+        UnityEngine.Debug.Log(sampleRate);
         StartCoroutine(GetBpm());
+        stopwatch.Start();
         songBeats = preprocessor.ProcessSong(source.clip);
-        Debug.Log("Length of beats array " + songBeats.Length);
-        Debug.Log("Song length using length of beat array times window length: " + Mathf.FloorToInt(preprocessor.WindowPositionToTime(songBeats.Length) / 60) + "m" + Mathf.FloorToInt(preprocessor.WindowPositionToTime(songBeats.Length) % 60) + "s");
+        stopwatch.Stop();
+        UnityEngine.Debug.Log("Stopwatch elapsed: " + stopwatch.Elapsed);
+        UnityEngine.Debug.Log("Length of beats array " + songBeats.Length);
+        UnityEngine.Debug.Log("Song length using length of beat array times window length: " + Mathf.FloorToInt(preprocessor.WindowPositionToTime(songBeats.Length) / 60) + "m" + Mathf.FloorToInt(preprocessor.WindowPositionToTime(songBeats.Length) % 60) + "s");
         source.Play();
-        StartCoroutine(GetCurrentWindowPosition(preprocessor.windowTimeSlice));
-        Debug.Log(preprocessor.TimeToWindowAmount(5.0f));
         //SpawnEQLine();
     }
 
@@ -138,20 +142,23 @@ public class SoundVisual : MonoBehaviour
     */
     private void Update()
     {
-        if(songBeats[windowNumber] == 1 && windowNumber != previouslyActivatedWindow)
+        if (source.isPlaying)
         {
-            Debug.Log(windowNumber);
-            GameObject temp = GameObject.CreatePrimitive(PrimitiveType.Cube) as GameObject;
-            temp.transform.position = new Vector3(0, 0, 10);
-            beatCubes.Add(temp);
-            canSpawn = false;
-            previouslyActivatedWindow = windowNumber;
-            StartCoroutine(WaitForNextSpawn());
+            windowNumber = preprocessor.TimeToWindowAmount(source.time);
+            if (songBeats[windowNumber] == 1 && windowNumber != previouslyActivatedWindow && canSpawn)
+            {
+                GameObject temp = GameObject.CreatePrimitive(PrimitiveType.Cube) as GameObject;
+                temp.transform.position = new Vector3(0, 0, 10);
+                beatCubes.Add(temp);
+                canSpawn = false;
+                previouslyActivatedWindow = windowNumber;
+                StartCoroutine(WaitForNextSpawn());
+            }
+            foreach (GameObject beatCube in beatCubes)
+            {
+                beatCube.transform.Translate(Vector3.back);
+            }
         }
-        /*foreach(GameObject beatCube in beatCubes)
-        {
-            beatCube.transform.Translate(Vector3.back);
-        }*/
         //CheckForBeat();
         //AnalyseSound();
         /*
@@ -270,7 +277,7 @@ public class SoundVisual : MonoBehaviour
 
     private float GetVoltageRatio(float decibelValue)
     {
-        Debug.Log("VoltageRatio is " + (Mathf.Pow(10, (decibelValue / 20))));
+        UnityEngine.Debug.Log("VoltageRatio is " + (Mathf.Pow(10, (decibelValue / 20))));
         return Mathf.Pow(10, (decibelValue / 20));
     }
 
@@ -369,10 +376,10 @@ public class SoundVisual : MonoBehaviour
         shiftArray[0] = instantEnergy;
         Array.Copy(shiftArray, instantEnergyHistory, shiftArray.Length);
         float beatEnergyTarget = constant * localAverageEnergy;
-        Debug.Log("Instant Energy: " + instantEnergyHistory[0] + "\nAverage Energy: " + localAverageEnergy + "\nEnergy Constant: " + constant +  "\nBeat target: " + beatEnergyTarget);
+        UnityEngine.Debug.Log("Instant Energy: " + instantEnergyHistory[0] + "\nAverage Energy: " + localAverageEnergy + "\nEnergy Constant: " + constant +  "\nBeat target: " + beatEnergyTarget);
         if (instantEnergy > beatEnergyTarget)
         {
-            Debug.Log("Beat Detected");
+            UnityEngine.Debug.Log("Beat Detected");
             cubeRend.material.color = Color.green;
             beatCount += 1;
         }
@@ -385,23 +392,13 @@ public class SoundVisual : MonoBehaviour
     IEnumerator GetBpm()
     {
         yield return new WaitForSeconds(15);
-        Debug.Log("Beat Count: " + beatCount + "\nBPM: " + beatCount * 4);
+        UnityEngine.Debug.Log("Beat Count: " + beatCount + "\nBPM: " + beatCount * 4);
         beatCount = 0;
-    }
-
-    IEnumerator GetCurrentWindowPosition(float time)
-    {
-        Debug.Log("Incrementing window position every " + time + "s");
-        while (true)
-        {
-            yield return new WaitForSeconds(time);
-            windowNumber += 1;
-        }
     }
 
     IEnumerator WaitForNextSpawn()
     {
-        yield return new WaitForSeconds(1);
+        yield return new WaitForSeconds(0.05f);
         canSpawn = true;
     }
 }

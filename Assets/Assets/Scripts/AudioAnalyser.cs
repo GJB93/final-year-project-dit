@@ -65,7 +65,7 @@ public static class AudioAnalyser {
     public static float GetInstantEnergy(float[] rightChannel, float[] leftChannel)
     {
         float instantEnergy = 0;
-
+        Debug.Log(rightChannel[0] + " " + leftChannel[0]);
         for (int i = 0; i < rightChannel.Length; i += 1)
         {
             instantEnergy += (rightChannel[i] * rightChannel[i]) + (leftChannel[i] * leftChannel[i]);
@@ -99,13 +99,74 @@ public static class AudioAnalyser {
 
     public static float GetEnergyFormulaConstant(float variance)
     {
-        return (-0.0025714f * variance) + 10.5142857f;
+        return (-0.0025714f * variance) + 500.5142857f;
     }
 
     public static float GetVoltageRatio(float decibelValue)
     {
         Debug.Log("VoltageRatio is " + (Mathf.Pow(10, (decibelValue / 20))));
         return Mathf.Pow(10, (decibelValue / 20));
+    }
+
+    private static float[] BandLoop(float[] spectrum, int startPos, int endPos)
+    {
+        float[] temp = new float[endPos];
+        for (int i = startPos; i <= endPos; i += 1)
+        {
+            temp[i - 1] = spectrum[i];
+        }
+        return temp;
+    }
+
+    public static List<float[]> GetBands(float[] spectrum, float sampleRate)
+    {
+        /*
+         * Sub-Bass:            20Hz - 60Hz         => 40Hz bandwidth
+         * Bass:                60Hz - 250Hz        => 190Hz bandwidth
+         * Low Midrange =       250Hz - 500Hz       => 250Hz bandwidth
+         * Midrange =           500Hz - 2kHz        => 1.5kHz bandwidth
+         * Upper Midrange =     2kHz - 4kHz         => 2kHz bandwidth
+         * Presence =           4kHz - 6kHz         => 2kHz bandwidth
+         * Brilliance =         6kHz - 20kHz        => 14kHz bandwidth
+         */
+
+        List<float[]> bands = new List<float[]>();
+
+        float hzPerInterval = GetHzPerInterval(sampleRate);
+
+        int subBassRange = (int)(40 / hzPerInterval);
+        int bassRange = (int)(190 / hzPerInterval) + subBassRange;
+        int lowMidrangeRange = (int)(250 / hzPerInterval) + bassRange;
+        int midrangeRange = (int)(1500 / hzPerInterval) + lowMidrangeRange;
+        int upperMidrangeRange = (int)(2000 / hzPerInterval) + midrangeRange;
+        int presenceRange = (int)(2000 / hzPerInterval) + upperMidrangeRange;
+        int brillianceRange = (int)(14000 / hzPerInterval) + presenceRange;
+
+        float[] subBass = new float[subBassRange];
+        float[] bass = new float[bassRange];
+        float[] lowMidrange = new float[lowMidrangeRange];
+        float[] midrange = new float[midrangeRange];
+        float[] upperMidrange = new float[upperMidrangeRange];
+        float[] presence = new float[presenceRange];
+        float[] brilliance = new float[brillianceRange];
+
+        subBass = BandLoop(spectrum, 1, subBassRange);
+        bass = BandLoop(spectrum, subBassRange + 1, bassRange);
+        lowMidrange = BandLoop(spectrum, bassRange + 1, lowMidrangeRange);
+        midrange = BandLoop(spectrum, lowMidrangeRange + 1, midrangeRange);
+        upperMidrange = BandLoop(spectrum, midrangeRange + 1, upperMidrangeRange);
+        presence = BandLoop(spectrum, upperMidrangeRange + 1, presenceRange);
+        brilliance = BandLoop(spectrum, presenceRange + 1, brillianceRange);
+
+        bands.Add(subBass);
+        bands.Add(bass);
+        bands.Add(lowMidrange);
+        bands.Add(midrange);
+        bands.Add(upperMidrange);
+        bands.Add(presence);
+        bands.Add(brilliance);
+
+        return bands;
     }
 
     public static List<float> GetBandAverages(float[] spectrum, float sampleRate)
