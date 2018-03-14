@@ -10,7 +10,7 @@ using UnityEngine;
 **/
 
 public static class AudioAnalyser {
-
+    
     private const int SAMPLE_SIZE = 1024;
     private const int BAND_SIZE = 7;
 
@@ -96,9 +96,9 @@ public static class AudioAnalyser {
         return squaredDifference / instantEnergyHistory.Length;
     }
 
-    public static float GetEnergyFormulaConstant(float variance)
+    public static float GetEnergyFormulaConstant(float variance, float sensitivity)
     {
-        return (-0.0025714f * variance) + 100.5142857f;
+        return (-0.0025714f * variance) + sensitivity;
     }
 
     public static float GetVoltageRatio(float decibelValue)

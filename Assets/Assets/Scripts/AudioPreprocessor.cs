@@ -17,7 +17,7 @@ public class AudioPreprocessor : MonoBehaviour {
     private List<float[]> energyHistories = new List<float[]>();
     private float overallAverageEnergy;
     public int bandToCheck = 1;
-    public int beatChecks = 0;
+    public float sensitivity = 100.5142857f;
 
     public int[] ProcessSong (AudioClip song) {
         windowIterations = Mathf.FloorToInt(song.samples / windowInterval);
@@ -26,7 +26,7 @@ public class AudioPreprocessor : MonoBehaviour {
         int songLength = song.samples / song.frequency;
         windowTimeSlice = 1.0f / (song.frequency / windowInterval);
         int historyBufferLength = Mathf.FloorToInt(song.frequency / windowInterval);
-        instantEnergyHistory = new float[windowInterval];
+        instantEnergyHistory = new float[historyBufferLength];
 
         return song.channels > 1 ? ProcessStereo(song) : ProcessMono(song);
 	}
@@ -116,7 +116,7 @@ public class AudioPreprocessor : MonoBehaviour {
         float instantEnergy = AudioAnalyser.GetInstantEnergy(rightChannel, leftChannel);
         float localAverageEnergy = AudioAnalyser.GetLocalAverageEnergy(instantEnergyHistory);
         float variance = AudioAnalyser.GetEnergyVariance(instantEnergyHistory, localAverageEnergy);
-        float constant = AudioAnalyser.GetEnergyFormulaConstant(variance);
+        float constant = AudioAnalyser.GetEnergyFormulaConstant(variance, sensitivity);
         float[] shiftArray = new float[instantEnergyHistory.Length];
 
         Array.Copy(instantEnergyHistory, 0, shiftArray, 1, instantEnergyHistory.Length - 1);
@@ -142,7 +142,7 @@ public class AudioPreprocessor : MonoBehaviour {
         }
         float localAverageEnergy = AudioAnalyser.GetLocalAverageEnergy(instantEnergyHistory);
         float variance = AudioAnalyser.GetEnergyVariance(instantEnergyHistory, localAverageEnergy);
-        float constant = AudioAnalyser.GetEnergyFormulaConstant(variance);
+        float constant = AudioAnalyser.GetEnergyFormulaConstant(variance, sensitivity);
         float[] shiftArray = new float[instantEnergyHistory.Length];
 
         Array.Copy(instantEnergyHistory, 0, shiftArray, 1, instantEnergyHistory.Length - 1);
@@ -159,6 +159,11 @@ public class AudioPreprocessor : MonoBehaviour {
 
     public int TimeToWindowAmount(float time)
     {
-        return Mathf.CeilToInt(time / windowTimeSlice);
+        return Mathf.RoundToInt(time / windowTimeSlice);
+    }
+
+    public void Start()
+    {
+        
     }
 }

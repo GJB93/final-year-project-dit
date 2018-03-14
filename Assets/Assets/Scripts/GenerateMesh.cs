@@ -31,7 +31,7 @@ public class GenerateMesh : MonoBehaviour {
     private void Generate()
     {
         roadLength = 50;
-        meshDepth = 10;
+        meshDepth = 7;
         GetComponent<MeshFilter>().mesh = mesh = new Mesh();
         mesh.name = "Procedural Grid";
 

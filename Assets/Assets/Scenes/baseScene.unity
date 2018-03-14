@@ -20,11 +20,11 @@ RenderSettings:
   m_FogDensity: 0.01
   m_LinearFogStart: 0
   m_LinearFogEnd: 300
-  m_AmbientSkyColor: {r: 0.212, g: 0.227, b: 0.259, a: 1}
-  m_AmbientEquatorColor: {r: 0.114, g: 0.125, b: 0.133, a: 1}
-  m_AmbientGroundColor: {r: 0.047, g: 0.043, b: 0.035, a: 1}
+  m_AmbientSkyColor: {r: 0, g: 0.21323532, b: 0.14665206, a: 1}
+  m_AmbientEquatorColor: {r: 0, g: 0.4044118, b: 0.277097, a: 1}
+  m_AmbientGroundColor: {r: 0, g: 0.6544118, b: 0.45109934, a: 1}
   m_AmbientIntensity: 1
-  m_AmbientMode: 0
+  m_AmbientMode: 1
   m_SubtractiveShadowColor: {r: 0.42, g: 0.478, b: 0.627, a: 1}
   m_SkyboxMaterial: {fileID: 2100000, guid: a07fadb24ea940240afba3afc1a692cc, type: 2}
   m_HaloStrength: 0.5
@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0, g: 0, b: 0, a: 1}
+  m_IndirectSpecularColor: {r: 0.053151503, g: 0.15094265, b: 0.19470885, a: 1}
 --- !u!157 &3
 LightmapSettings:
   m_ObjectHideFlags: 0
@@ -137,8 +137,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 79638b1e3bb409646b8945c0a9da0249, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  zInterval: 0.5
-  xInterval: 0.5
+  zInterval: 1
+  xInterval: 1
   orientation: 1
 --- !u!4 &549260346
 Transform:
@@ -206,8 +206,8 @@ GameObject:
   - component: {fileID: 735693446}
   - component: {fileID: 735693452}
   - component: {fileID: 735693445}
-  - component: {fileID: 735693451}
   - component: {fileID: 735693453}
+  - component: {fileID: 735693451}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -285,7 +285,7 @@ RectTransform:
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 735693444}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: -10}
+  m_LocalPosition: {x: 0, y: 0, z: -0.5}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
@@ -293,7 +293,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0.5}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &735693451
@@ -304,27 +304,17 @@ MonoBehaviour:
   m_GameObject: {fileID: 735693444}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 130bafb6840725d46bd7a4a36e475ee3, type: 3}
+  m_Script: {fileID: 11500000, guid: 3345e0f6cdbc66d469b075699f92c96d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  rmsValue: 0
-  dbValue: 0
-  pitchValue: 0
-  backgroundIntensity: 0
-  backgroundMaterial: {fileID: 0}
-  minColor: {r: 0, g: 0, b: 0, a: 0}
-  maxColor: {r: 0, g: 0, b: 0, a: 0}
   beatCubes: []
   spawnLocation: {fileID: 1143660362}
   hitLocation: {fileID: 1744565360}
-  visualModifier: 5000
-  risingVisualiserSmoothSpeed: 0.5
-  fallingVisualiserSmoothSpeed: 0.5
-  backgroundSmoothSpeed: 0.2
-  keepPercentage: 1
+  timeToReachPlayer: 5
+  unitsPerSecond: 2
+  unitsPerFrame: 0
   listenerVolumeValue: 1
   sourceVolumeValue: 1
-  cameraMovement: 1
 --- !u!82 &735693452
 AudioSource:
   m_ObjectHideFlags: 0
@@ -334,7 +324,7 @@ AudioSource:
   m_Enabled: 1
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
-  m_audioClip: {fileID: 8300000, guid: d49de467e6d2e0141b97a9507241636f, type: 3}
+  m_audioClip: {fileID: 8300000, guid: b63496585a18742429094df243bc7978, type: 3}
   m_PlayOnAwake: 0
   m_Volume: 1
   m_Pitch: 1
@@ -419,7 +409,7 @@ MonoBehaviour:
   windowInterval: 2048
   windowTimeSlice: 0
   bandToCheck: 5
-  beatChecks: 0
+  sensitivity: 100.5143
 --- !u!1 &896199264
 GameObject:
   m_ObjectHideFlags: 0
@@ -555,13 +545,13 @@ Transform:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 1143660362}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalRotation: {x: 0, y: 1, z: 0, w: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 4
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 180, z: 0}
 --- !u!1 &1246510360
 GameObject:
   m_ObjectHideFlags: 0
@@ -570,9 +560,9 @@ GameObject:
   serializedVersion: 5
   m_Component:
   - component: {fileID: 1246510364}
-  - component: {fileID: 1246510362}
   - component: {fileID: 1246510361}
   - component: {fileID: 1246510363}
+  - component: {fileID: 1246510362}
   m_Layer: 0
   m_Name: Road
   m_TagString: Untagged
@@ -612,8 +602,8 @@ MeshRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
---- !u!64 &1246510362
-MeshCollider:
+--- !u!65 &1246510362
+BoxCollider:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
@@ -622,10 +612,8 @@ MeshCollider:
   m_IsTrigger: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Convex: 0
-  m_InflateMesh: 0
-  m_SkinWidth: 0.01
-  m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
+  m_Size: {x: 10, y: 2.220446e-16, z: 10}
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!33 &1246510363
 MeshFilter:
   m_ObjectHideFlags: 0
@@ -719,6 +707,8 @@ GameObject:
   serializedVersion: 5
   m_Component:
   - component: {fileID: 1744565361}
+  - component: {fileID: 1744565363}
+  - component: {fileID: 1744565362}
   m_Layer: 0
   m_Name: Hit Location
   m_TagString: Untagged
@@ -733,9 +723,32 @@ Transform:
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 1744565360}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: -10}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 5
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1744565362
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1744565360}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4581b4599155c2e4388e13d17b7caf7b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!65 &1744565363
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1744565360}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Size: {x: 10, y: 3, z: 1}
+  m_Center: {x: 0, y: 1.5, z: -0.5}
