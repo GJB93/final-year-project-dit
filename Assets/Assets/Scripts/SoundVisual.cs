@@ -26,6 +26,8 @@ public class SoundVisual : MonoBehaviour
     public Color minColor;
     public Color maxColor;
     public List<GameObject> beatCubes;
+    public GameObject spawnLocation;
+    public GameObject hitLocation;
     
     public float visualModifier = 1000.0f;
     public float risingVisualiserSmoothSpeed = 0.5f;
@@ -88,7 +90,18 @@ public class SoundVisual : MonoBehaviour
         UnityEngine.Debug.Log("Stopwatch elapsed: " + stopwatch.Elapsed);
         UnityEngine.Debug.Log("Length of beats array " + songBeats.Length);
         UnityEngine.Debug.Log("Song length using length of beat array times window length: " + Mathf.FloorToInt(preprocessor.WindowPositionToTime(songBeats.Length) / 60) + "m" + Mathf.FloorToInt(preprocessor.WindowPositionToTime(songBeats.Length) % 60) + "s");
-        source.Play();
+        for(int i = 0; i < preprocessor.TimeToWindowAmount(5.0f); i+=1)
+        {
+            if (songBeats[i] == 1)
+            {
+                GameObject temp = GameObject.CreatePrimitive(PrimitiveType.Cube) as GameObject;
+                temp.transform.position = spawnLocation.transform.position + new Vector3(0, 0, preprocessor.WindowPositionToTime(i) * 5);
+                temp.tag = "Beat Cube";
+                i += preprocessor.TimeToWindowAmount(0.05f);
+            }
+        }
+        StartCoroutine(WaitToPlaySong());
+        //source.Play();
         //SpawnEQLine();
     }
 
@@ -141,23 +154,28 @@ public class SoundVisual : MonoBehaviour
 
     */
     private void Update()
-    {
+    {   
         if (source.isPlaying)
         {
-            windowNumber = preprocessor.TimeToWindowAmount(source.time);
-            if (songBeats[windowNumber] == 1 && windowNumber != previouslyActivatedWindow && canSpawn)
+            if (source.time + 5 < source.clip.length)
             {
-                GameObject temp = GameObject.CreatePrimitive(PrimitiveType.Cube) as GameObject;
-                temp.transform.position = new Vector3(0, 0, 10);
-                beatCubes.Add(temp);
-                canSpawn = false;
-                previouslyActivatedWindow = windowNumber;
-                StartCoroutine(WaitForNextSpawn());
+                windowNumber = preprocessor.TimeToWindowAmount(source.time + 5);
+                if (songBeats[windowNumber] == 1 && windowNumber != previouslyActivatedWindow && canSpawn)
+                {
+                    GameObject lastCube = GameObject.FindGameObjectsWithTag("Beat Cube")[GameObject.FindGameObjectsWithTag("Beat Cube").Length - 1];
+                    GameObject temp = GameObject.CreatePrimitive(PrimitiveType.Cube) as GameObject;
+                    temp.transform.position = lastCube.transform.position + new Vector3(0, 0, 5);
+                    temp.tag = "Beat Cube";
+                    canSpawn = false;
+                    previouslyActivatedWindow = windowNumber;
+                    StartCoroutine(WaitForNextSpawn());
+                }
             }
-            foreach (GameObject beatCube in beatCubes)
-            {
-                beatCube.transform.Translate(Vector3.back);
-            }
+        }
+        foreach (GameObject beatCube in GameObject.FindGameObjectsWithTag("Beat Cube"))
+        {
+            
+            beatCube.transform.position += Vector3.Lerp(spawnLocation.transform.position, hitLocation.transform.position, preprocessor.WindowPositionToTime(1) * Time.deltaTime * 5);
         }
         //CheckForBeat();
         //AnalyseSound();
@@ -400,5 +418,11 @@ public class SoundVisual : MonoBehaviour
     {
         yield return new WaitForSeconds(0.05f);
         canSpawn = true;
+    }
+
+    IEnumerator WaitToPlaySong()
+    {
+        yield return new WaitForSeconds(5.0f);
+        source.Play();
     }
 }

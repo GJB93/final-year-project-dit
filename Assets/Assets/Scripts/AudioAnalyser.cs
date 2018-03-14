@@ -65,7 +65,6 @@ public static class AudioAnalyser {
     public static float GetInstantEnergy(float[] rightChannel, float[] leftChannel)
     {
         float instantEnergy = 0;
-        Debug.Log(rightChannel[0] + " " + leftChannel[0]);
         for (int i = 0; i < rightChannel.Length; i += 1)
         {
             instantEnergy += (rightChannel[i] * rightChannel[i]) + (leftChannel[i] * leftChannel[i]);
@@ -99,7 +98,7 @@ public static class AudioAnalyser {
 
     public static float GetEnergyFormulaConstant(float variance)
     {
-        return (-0.0025714f * variance) + 500.5142857f;
+        return (-0.0025714f * variance) + 100.5142857f;
     }
 
     public static float GetVoltageRatio(float decibelValue)
@@ -118,7 +117,7 @@ public static class AudioAnalyser {
         return temp;
     }
 
-    public static List<float[]> GetBands(float[] spectrum, float sampleRate)
+    public static List<float[]> GetDistinctBands(float[] spectrum, float sampleRate)
     {
         /*
          * Sub-Bass:            20Hz - 60Hz         => 40Hz bandwidth

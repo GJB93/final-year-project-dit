@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System;
 using UnityEngine;
+using UnityEngine.VR;
 
 public class AudioPreprocessor : MonoBehaviour {
 
@@ -13,8 +14,10 @@ public class AudioPreprocessor : MonoBehaviour {
     public float windowTimeSlice;
     private int lastWindowSize;
     private float[] instantEnergyHistory;
+    private List<float[]> energyHistories = new List<float[]>();
     private float overallAverageEnergy;
     public int bandToCheck = 1;
+    public int beatChecks = 0;
 
     public int[] ProcessSong (AudioClip song) {
         windowIterations = Mathf.FloorToInt(song.samples / windowInterval);
@@ -22,6 +25,7 @@ public class AudioPreprocessor : MonoBehaviour {
         Debug.Log("Window Iterations: " + windowIterations + "\nLast Window Size: " + lastWindowSize);
         int songLength = song.samples / song.frequency;
         windowTimeSlice = 1.0f / (song.frequency / windowInterval);
+        int historyBufferLength = Mathf.FloorToInt(song.frequency / windowInterval);
         instantEnergyHistory = new float[windowInterval];
 
         return song.channels > 1 ? ProcessStereo(song) : ProcessMono(song);
@@ -53,7 +57,7 @@ public class AudioPreprocessor : MonoBehaviour {
                     temp[j] = samples[(windowInterval * i) + j];
                 }
             }
-            List<float[]> bands = AudioAnalyser.GetBands(FastFourierTransform.FftMag(temp), song.frequency);
+            List<float[]> bands = AudioAnalyser.GetDistinctBands(FastFourierTransform.FftMag(temp), song.frequency);
             beatTrack[i] = CheckForBeat(bands.ElementAt(bandToCheck), new float[temp.Length]) ? 1 : 0;
 
         }
@@ -99,10 +103,9 @@ public class AudioPreprocessor : MonoBehaviour {
                     tempLeft[j] = leftSamples[(windowInterval * i) + j];
                 }
             }
-            List<float[]> bandsRight = AudioAnalyser.GetBands(FastFourierTransform.FftMag(tempRight), song.frequency);
-            List<float[]> bandsLeft = AudioAnalyser.GetBands(FastFourierTransform.FftMag(tempLeft), song.frequency);
+            List<float[]> bandsRight = AudioAnalyser.GetDistinctBands(FastFourierTransform.FftMag(tempRight), song.frequency);
+            List<float[]> bandsLeft = AudioAnalyser.GetDistinctBands(FastFourierTransform.FftMag(tempLeft), song.frequency);
             beatTrack[i] = CheckForBeat(bandsRight.ElementAt(bandToCheck), bandsLeft.ElementAt(bandToCheck)) ? 1 : 0;
-
         }
 
         return beatTrack;
@@ -125,6 +128,27 @@ public class AudioPreprocessor : MonoBehaviour {
         {
             return true;
         }
+        return false;
+    }
+
+    bool CheckForBeatBands(List<float[]> rightChannel, List<float[]> leftChannel)
+    {
+        float[] instantEnergies = new float[rightChannel.Capacity];
+        float[] averageEnergies = new float[rightChannel.Capacity];
+        for(int i = 0; i < rightChannel.Capacity; i += 1)
+        {
+            instantEnergies[i] = AudioAnalyser.GetInstantEnergy(rightChannel.ElementAt(i), leftChannel.ElementAt(i));
+            averageEnergies[i] = AudioAnalyser.GetLocalAverageEnergy(energyHistories.ElementAt(i));
+        }
+        float localAverageEnergy = AudioAnalyser.GetLocalAverageEnergy(instantEnergyHistory);
+        float variance = AudioAnalyser.GetEnergyVariance(instantEnergyHistory, localAverageEnergy);
+        float constant = AudioAnalyser.GetEnergyFormulaConstant(variance);
+        float[] shiftArray = new float[instantEnergyHistory.Length];
+
+        Array.Copy(instantEnergyHistory, 0, shiftArray, 1, instantEnergyHistory.Length - 1);
+        Array.Copy(shiftArray, instantEnergyHistory, shiftArray.Length);
+        float beatEnergyTarget = constant * localAverageEnergy;
+        Debug.Log("Instant Energy: " + instantEnergyHistory[0] + "\nAverage Energy: " + localAverageEnergy + "\nEnergy Constant: " + constant + "\nBeat target: " + beatEnergyTarget);
         return false;
     }
 
