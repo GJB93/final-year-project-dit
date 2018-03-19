@@ -34,11 +34,11 @@ public static class AudioAnalyser {
         return 20 * Mathf.Log10(GetRmsValue(samples) / 0.1f);
     }
 
-    public static float GetPitchValue(float[] spectrum, float sampleRate)
+    public static float GetPitchValue(float[] spectrum, float sampleRate, float sampleSize)
     {
         float maxV = 0;
         var maxN = 0;
-        float hzPerInterval = GetHzPerInterval(sampleRate);
+        float hzPerInterval = GetHzPerInterval(sampleRate, sampleSize);
         for (int i = 0; i < SAMPLE_SIZE; i += 1)
         {
             if (!(spectrum[i] > maxV) || !(spectrum[i] > 0.0f))
@@ -117,7 +117,7 @@ public static class AudioAnalyser {
         return temp;
     }
 
-    public static List<float[]> GetDistinctBands(float[] spectrum, float sampleRate)
+    public static List<float[]> GetDistinctBands(float[] spectrum, float sampleRate, float sampleSize)
     {
         /*
          * Sub-Bass:            20Hz - 60Hz         => 40Hz bandwidth
@@ -131,26 +131,33 @@ public static class AudioAnalyser {
 
         List<float[]> bands = new List<float[]>();
 
-        float hzPerInterval = GetHzPerInterval(sampleRate);
+        float hzPerInterval = GetHzPerInterval(sampleRate, sampleSize);
 
-        int subBassRange = (int)(40 / hzPerInterval);
-        int bassRange = (int)(190 / hzPerInterval) + subBassRange;
-        int lowMidrangeRange = (int)(250 / hzPerInterval) + bassRange;
-        int midrangeRange = (int)(1500 / hzPerInterval) + lowMidrangeRange;
-        int upperMidrangeRange = (int)(2000 / hzPerInterval) + midrangeRange;
-        int presenceRange = (int)(2000 / hzPerInterval) + upperMidrangeRange;
-        int brillianceRange = (int)(14000 / hzPerInterval) + presenceRange;
+        int subBassSize = Mathf.CeilToInt(40 / hzPerInterval);
+        int bassSize = Mathf.CeilToInt(190 / hzPerInterval);
+        int lowMidrangeSize = Mathf.CeilToInt(250 / hzPerInterval);
+        int midrangeSize = Mathf.CeilToInt(1500 / hzPerInterval);
+        int upperMidrangeSize = Mathf.CeilToInt(2000 / hzPerInterval);
+        int presenceSize = Mathf.CeilToInt(2000 / hzPerInterval);
+        int brillianceSize = Mathf.CeilToInt(14000 / hzPerInterval);
+        
+        int bassRange = bassSize + subBassSize;
+        int lowMidrangeRange = lowMidrangeSize + bassSize;
+        int midrangeRange = midrangeSize + lowMidrangeSize;
+        int upperMidrangeRange = upperMidrangeSize + midrangeSize;
+        int presenceRange = presenceSize + upperMidrangeSize;
+        int brillianceRange = brillianceSize + presenceSize;
 
-        float[] subBass = new float[subBassRange];
-        float[] bass = new float[bassRange];
-        float[] lowMidrange = new float[lowMidrangeRange];
-        float[] midrange = new float[midrangeRange];
-        float[] upperMidrange = new float[upperMidrangeRange];
-        float[] presence = new float[presenceRange];
-        float[] brilliance = new float[brillianceRange];
-
-        subBass = BandLoop(spectrum, 1, subBassRange);
-        bass = BandLoop(spectrum, subBassRange + 1, bassRange);
+        float[] subBass = new float[subBassSize];
+        float[] bass = new float[bassSize];
+        float[] lowMidrange = new float[lowMidrangeSize];
+        float[] midrange = new float[midrangeSize];
+        float[] upperMidrange = new float[upperMidrangeSize];
+        float[] presence = new float[presenceSize];
+        float[] brilliance = new float[brillianceSize];
+        Debug.Log("Spectrum Length: " + spectrum.Length + "\nLoop from " + (presenceRange + 1) + " to " + brillianceRange);
+        subBass = BandLoop(spectrum, 1, subBassSize);
+        bass = BandLoop(spectrum, subBassSize + 1, bassRange);
         lowMidrange = BandLoop(spectrum, bassRange + 1, lowMidrangeRange);
         midrange = BandLoop(spectrum, lowMidrangeRange + 1, midrangeRange);
         upperMidrange = BandLoop(spectrum, midrangeRange + 1, upperMidrangeRange);
@@ -168,7 +175,7 @@ public static class AudioAnalyser {
         return bands;
     }
 
-    public static List<float> GetBandAverages(float[] spectrum, float sampleRate)
+    public static List<float> GetBandAverages(float[] spectrum, float sampleRate, float sampleSize)
     {
         /*
          * Sub-Bass:            20Hz - 60Hz         => 40Hz bandwidth
@@ -190,15 +197,15 @@ public static class AudioAnalyser {
         List<float> presence = new List<float>();
         List<float> brilliance = new List<float>();
 
-        float hzPerInterval = GetHzPerInterval(sampleRate);
+        float hzPerInterval = GetHzPerInterval(sampleRate, sampleSize);
 
-        int subBassRange = (int)(40 / hzPerInterval);
-        int bassRange = (int)(190 / hzPerInterval) + subBassRange;
-        int lowMidrangeRange = (int)(250 / hzPerInterval) + bassRange;
-        int midrangeRange = (int)(1500 / hzPerInterval) + lowMidrangeRange;
-        int upperMidrangeRange = (int)(2000 / hzPerInterval) + midrangeRange;
-        int presenceRange = (int)(2000 / hzPerInterval) + upperMidrangeRange;
-        int brillianceRange = (int)(14000 / hzPerInterval) + presenceRange;
+        int subBassRange = Mathf.CeilToInt(40 / hzPerInterval);
+        int bassRange = Mathf.CeilToInt(190 / hzPerInterval) + subBassRange;
+        int lowMidrangeRange = Mathf.CeilToInt(250 / hzPerInterval) + bassRange;
+        int midrangeRange = Mathf.CeilToInt(1500 / hzPerInterval) + lowMidrangeRange;
+        int upperMidrangeRange = Mathf.CeilToInt(2000 / hzPerInterval) + midrangeRange;
+        int presenceRange = Mathf.CeilToInt(2000 / hzPerInterval) + upperMidrangeRange;
+        int brillianceRange = Mathf.CeilToInt(14000 / hzPerInterval) + presenceRange;
 
         for (int interval = 1; interval <= brillianceRange; interval += 1)
         {
@@ -243,9 +250,9 @@ public static class AudioAnalyser {
         return averages;
     }
 
-    private static float GetHzPerInterval(float sampleRate)
+    private static float GetHzPerInterval(float sampleRate, float sampleSize)
     {
         float songMaxFrequency = sampleRate / 2;
-        return songMaxFrequency / SAMPLE_SIZE;
+        return songMaxFrequency / sampleSize;
     }
 }

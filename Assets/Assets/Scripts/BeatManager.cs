@@ -20,6 +20,7 @@ public class BeatManager: MonoBehaviour {
     private AudioPreprocessor preprocessor;
     private bool canSpawn = true;
     private int previouslyActivatedWindow;
+    private float lastX;
     private Stopwatch stopwatch;
     private AudioSource source;
 
@@ -63,7 +64,26 @@ public class BeatManager: MonoBehaviour {
                 if (songBeats[windowNumber] == 1 && windowNumber > previouslyActivatedWindow && canSpawn)
                 {
                     GameObject temp = GameObject.CreatePrimitive(PrimitiveType.Cube) as GameObject;
-                    temp.transform.position = spawnLocation.transform.position + new Vector3(0, temp.transform.localScale.y * 0.5f, temp.transform.localScale.z * 0.5f);
+                    float x = 0;
+                    float timeDiff = preprocessor.TimeToWindowAmount(windowNumber) - preprocessor.TimeToWindowAmount(previouslyActivatedWindow);
+                    UnityEngine.Debug.Log(timeDiff);
+                    if (timeDiff < 0.2f)
+                    {
+                        if (lastX > -4.0f && lastX < 4.0f)
+                        {
+                            x = lastX - 1.0f;
+                        }
+                        else
+                        {
+                            x = lastX = 0;
+                        }
+                    }
+                    else
+                    {
+                        x = 0;
+                    }
+                    temp.transform.position = spawnLocation.transform.position + new Vector3(x, temp.transform.localScale.y * 0.5f, temp.transform.localScale.z * 0.5f);
+                    lastX = x;
                     temp.AddComponent<BoxCollider>();
                     temp.AddComponent<Rigidbody>();
                     temp.tag = "Beat Cube";
@@ -80,9 +100,27 @@ public class BeatManager: MonoBehaviour {
                 if (songBeats[i] == 1 && i > previouslyActivatedWindow && canSpawn)
                 {
                     GameObject temp = GameObject.CreatePrimitive(PrimitiveType.Cube) as GameObject;
+                    float x = 0;
+                    float timeDiff = preprocessor.TimeToWindowAmount(windowNumber) - preprocessor.TimeToWindowAmount(previouslyActivatedWindow);
+                    if(timeDiff < 0.2f)
+                    {
+                        if(lastX > -4.0f && lastX < 4.0f)
+                        {
+                            x = lastX + 1.0f;
+                        }
+                        else
+                        {
+                            x = lastX = 0;
+                        }
+                    }
+                    else
+                    {
+                        x = 0;
+                    }
                     temp.AddComponent<BoxCollider>();
                     temp.AddComponent<Rigidbody>();
-                    temp.transform.position = spawnLocation.transform.position + new Vector3(0, temp.transform.localScale.y * 0.5f, preprocessor.WindowPositionToTime(i) + (temp.transform.localScale.z * 0.5f));
+                    temp.transform.position = spawnLocation.transform.position + new Vector3(x, temp.transform.localScale.y * 0.5f, preprocessor.WindowPositionToTime(i) + (temp.transform.localScale.z * 0.5f));
+                    lastX = x;
                     temp.tag = "Beat Cube";
                     canSpawn = false;
                     previouslyActivatedWindow = windowNumber;

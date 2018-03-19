@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 // Following tutorial: http://catlikecoding.com/unity/tutorials/procedural-grid/
@@ -13,25 +14,83 @@ public enum Orientation
 [RequireComponent (typeof(MeshFilter), typeof(MeshRenderer))]
 public class GenerateMesh : MonoBehaviour {
 
+    private const int SAMPLE_SIZE = 2048;
+
     public float zInterval;
     public float xInterval;
     public Orientation orientation;
+    public float risingVisualiserSmoothSpeed = 0.5f;
+    public float fallingVisualiserSmoothSpeed = 0.5f;
 
     private Vector3[] vertices;
+    private float[] eqBandPreviousY;
     private Mesh mesh;
+    private Camera mainCamera;
     private float roadLength;
     private float meshDepth;
     private float height;
+    private float previousY = 0;
+    private float[] spectrum;
+    private AudioSource source;
+    private List<float> bands;
 
     private void Awake()
     {
+        source = Camera.main.GetComponent<AudioSource>();
+        spectrum = new float[SAMPLE_SIZE];
         Generate();
+        eqBandPreviousY = new float[(int)meshDepth];
+        bands = new List<float>();
+    }
+
+    private void Update()
+    {
+        Mesh mesh = GetComponent<MeshFilter>().mesh;
+        vertices = mesh.vertices;
+        source.GetSpectrumData(spectrum, 0, FFTWindow.BlackmanHarris);
+        bands = AudioAnalyser.GetBandAverages(spectrum, source.clip.frequency, SAMPLE_SIZE);
+        Debug.Log(bands.ElementAt(0));
+        int vertexCount = 0;
+        for (float x = 0; x <= meshDepth; x += xInterval)
+        {
+            for (float z = 0; z <= roadLength; z += zInterval)
+            {
+                if (x == 0 || x == meshDepth || z == 0 || z == roadLength)
+                {
+                    height = 0;
+                }
+                else
+                {
+                    float risingInterpolater = 0;
+                    float fallingInterpolator = 0;
+                    float interpolation = 0;
+                    float scaleY = Mathf.Pow(bands.ElementAt((int) x - 1), 2) * 1000;
+                    risingInterpolater += Time.deltaTime * risingVisualiserSmoothSpeed;
+                    fallingInterpolator += Time.deltaTime * fallingVisualiserSmoothSpeed;
+                    interpolation = scaleY > eqBandPreviousY[(int)x-1] ? Mathf.Lerp(eqBandPreviousY[(int)x-1], scaleY, risingInterpolater) : Mathf.Lerp(eqBandPreviousY[(int)x-1], eqBandPreviousY[(int)x-1] / 2, fallingInterpolator);
+                    height = interpolation * Time.deltaTime;
+                    eqBandPreviousY[(int) x-1] = interpolation;
+                }
+
+                if (orientation == Orientation.Left)
+                {
+                    vertices[vertexCount] = new Vector3(-x, height, z);
+                }
+                else
+                {
+                    vertices[vertexCount] = new Vector3(x, height, z);
+                }
+                vertexCount += 1;
+            }
+        }
+        mesh.vertices = vertices;
+        mesh.RecalculateBounds();
     }
 
     private void Generate()
     {
         roadLength = 50;
-        meshDepth = 7;
+        meshDepth = 8;
         GetComponent<MeshFilter>().mesh = mesh = new Mesh();
         mesh.name = "Procedural Grid";
 
@@ -47,7 +106,7 @@ public class GenerateMesh : MonoBehaviour {
                 }
                 else
                 {
-                    height = Random.value;
+                    height = 0;
                 }
 
                 if (orientation == Orientation.Left)

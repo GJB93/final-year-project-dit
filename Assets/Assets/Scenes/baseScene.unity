@@ -140,6 +140,8 @@ MonoBehaviour:
   zInterval: 1
   xInterval: 1
   orientation: 1
+  risingVisualiserSmoothSpeed: 0.5
+  fallingVisualiserSmoothSpeed: 0.5
 --- !u!4 &549260346
 Transform:
   m_ObjectHideFlags: 0
@@ -324,7 +326,7 @@ AudioSource:
   m_Enabled: 1
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
-  m_audioClip: {fileID: 8300000, guid: b63496585a18742429094df243bc7978, type: 3}
+  m_audioClip: {fileID: 8300000, guid: 3a128252bee03ac4a9672ff2f8573f66, type: 3}
   m_PlayOnAwake: 0
   m_Volume: 1
   m_Pitch: 1
@@ -408,7 +410,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   windowInterval: 2048
   windowTimeSlice: 0
-  bandToCheck: 5
+  bandToCheck: 4
   sensitivity: 100.5143
 --- !u!1 &896199264
 GameObject:
@@ -472,6 +474,8 @@ MonoBehaviour:
   zInterval: 1
   xInterval: 1
   orientation: 0
+  risingVisualiserSmoothSpeed: 0.5
+  fallingVisualiserSmoothSpeed: 0.5
 --- !u!4 &917802992
 Transform:
   m_ObjectHideFlags: 0

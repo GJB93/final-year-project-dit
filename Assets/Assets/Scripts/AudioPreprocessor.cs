@@ -9,7 +9,7 @@ public class AudioPreprocessor : MonoBehaviour {
 
     private AudioSource source;
     private AudioClip song;
-    public int windowInterval = 2048;
+    public int windowInterval = 4096;
     private int windowIterations;
     public float windowTimeSlice;
     private int lastWindowSize;
@@ -57,7 +57,7 @@ public class AudioPreprocessor : MonoBehaviour {
                     temp[j] = samples[(windowInterval * i) + j];
                 }
             }
-            List<float[]> bands = AudioAnalyser.GetDistinctBands(FastFourierTransform.FftMag(temp), song.frequency);
+            List<float[]> bands = AudioAnalyser.GetDistinctBands(FastFourierTransform.FftMag(temp), song.frequency, windowInterval / 2.0f);
             beatTrack[i] = CheckForBeat(bands.ElementAt(bandToCheck), new float[temp.Length]) ? 1 : 0;
 
         }
@@ -103,8 +103,8 @@ public class AudioPreprocessor : MonoBehaviour {
                     tempLeft[j] = leftSamples[(windowInterval * i) + j];
                 }
             }
-            List<float[]> bandsRight = AudioAnalyser.GetDistinctBands(FastFourierTransform.FftMag(tempRight), song.frequency);
-            List<float[]> bandsLeft = AudioAnalyser.GetDistinctBands(FastFourierTransform.FftMag(tempLeft), song.frequency);
+            List<float[]> bandsRight = AudioAnalyser.GetDistinctBands(FastFourierTransform.FftMag(tempRight), song.frequency, windowInterval / 2.0f);
+            List<float[]> bandsLeft = AudioAnalyser.GetDistinctBands(FastFourierTransform.FftMag(tempLeft), song.frequency, windowInterval / 2.0f);
             beatTrack[i] = CheckForBeat(bandsRight.ElementAt(bandToCheck), bandsLeft.ElementAt(bandToCheck)) ? 1 : 0;
         }
 
