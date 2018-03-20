@@ -49,7 +49,6 @@ public class GenerateMesh : MonoBehaviour {
         vertices = mesh.vertices;
         source.GetSpectrumData(spectrum, 0, FFTWindow.BlackmanHarris);
         bands = AudioAnalyser.GetBandAverages(spectrum, source.clip.frequency, SAMPLE_SIZE);
-        Debug.Log(bands.ElementAt(0));
         int vertexCount = 0;
         for (float x = 0; x <= meshDepth; x += xInterval)
         {
@@ -64,12 +63,12 @@ public class GenerateMesh : MonoBehaviour {
                     float risingInterpolater = 0;
                     float fallingInterpolator = 0;
                     float interpolation = 0;
-                    float scaleY = Mathf.Pow(bands.ElementAt((int) x - 1), 2) * 1000;
+                    float scaleY = bands.ElementAt(((int)meshDepth - 1) - (int)x) * 100;
                     risingInterpolater += Time.deltaTime * risingVisualiserSmoothSpeed;
                     fallingInterpolator += Time.deltaTime * fallingVisualiserSmoothSpeed;
-                    interpolation = scaleY > eqBandPreviousY[(int)x-1] ? Mathf.Lerp(eqBandPreviousY[(int)x-1], scaleY, risingInterpolater) : Mathf.Lerp(eqBandPreviousY[(int)x-1], eqBandPreviousY[(int)x-1] / 2, fallingInterpolator);
-                    height = interpolation * Time.deltaTime;
-                    eqBandPreviousY[(int) x-1] = interpolation;
+                    interpolation = scaleY > previousY ? Mathf.Lerp(eqBandPreviousY[((int)meshDepth - 1) - (int)x], scaleY, risingInterpolater) : Mathf.Lerp(eqBandPreviousY[((int)meshDepth - 1) - (int)x], eqBandPreviousY[((int)meshDepth - 1) - (int)x] * 0.8f, fallingInterpolator);
+                    height = interpolation;
+                    eqBandPreviousY[((int)meshDepth - 1) - (int)x] = interpolation;
                 }
 
                 if (orientation == Orientation.Left)
@@ -82,9 +81,11 @@ public class GenerateMesh : MonoBehaviour {
                 }
                 vertexCount += 1;
             }
+            
         }
         mesh.vertices = vertices;
         mesh.RecalculateBounds();
+        mesh.RecalculateNormals();
     }
 
     private void Generate()

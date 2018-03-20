@@ -37,7 +37,6 @@ public class BeatManager: MonoBehaviour {
         float dist = Vector3.Distance(hitLocation.transform.position, spawnLocation.transform.position);
         float speed = dist / timeToReachPlayer;
         unitsPerFrame = Time.deltaTime / speed;
-        unitsPerSecond = dist / timeToReachPlayer;
         stopwatch = new Stopwatch();
         beatCubes = new List<GameObject>();
         source = GetComponent<AudioSource>();
@@ -65,17 +64,23 @@ public class BeatManager: MonoBehaviour {
                 {
                     GameObject temp = GameObject.CreatePrimitive(PrimitiveType.Cube) as GameObject;
                     float x = 0;
-                    float timeDiff = preprocessor.TimeToWindowAmount(windowNumber) - preprocessor.TimeToWindowAmount(previouslyActivatedWindow);
+                    float timeDiff = preprocessor.WindowPositionToTime(windowNumber) - preprocessor.WindowPositionToTime(previouslyActivatedWindow);
                     UnityEngine.Debug.Log(timeDiff);
-                    if (timeDiff < 0.2f)
+                    if (timeDiff < 0.7f)
                     {
                         if (lastX > -4.0f && lastX < 4.0f)
                         {
-                            x = lastX - 1.0f;
+                            if(timeDiff < 0.6f)
+                                x = lastX - 1.0f;
+                            else
+                                x = lastX + 1.0f;
                         }
                         else
                         {
-                            x = lastX = 0;
+                            if (lastX <= -4.0f)
+                                x = lastX + 1.0f;
+                            else
+                                x = lastX - 1.0f;
                         }
                     }
                     else
@@ -101,16 +106,22 @@ public class BeatManager: MonoBehaviour {
                 {
                     GameObject temp = GameObject.CreatePrimitive(PrimitiveType.Cube) as GameObject;
                     float x = 0;
-                    float timeDiff = preprocessor.TimeToWindowAmount(windowNumber) - preprocessor.TimeToWindowAmount(previouslyActivatedWindow);
-                    if(timeDiff < 0.2f)
+                    float timeDiff = preprocessor.WindowPositionToTime(windowNumber) - preprocessor.WindowPositionToTime(previouslyActivatedWindow);
+                    if (timeDiff < 0.7f)
                     {
-                        if(lastX > -4.0f && lastX < 4.0f)
+                        if (lastX > -4.0f && lastX < 4.0f)
                         {
-                            x = lastX + 1.0f;
+                            if (timeDiff < 0.6f)
+                                x = lastX - 1.0f;
+                            else
+                                x = lastX + 1.0f;
                         }
                         else
                         {
-                            x = lastX = 0;
+                            if (lastX <= -4.0f)
+                                x = lastX + 1.0f;
+                            else
+                                x = lastX - 1.0f;
                         }
                     }
                     else
@@ -136,7 +147,7 @@ public class BeatManager: MonoBehaviour {
 
     IEnumerator WaitForNextSpawn()
     {
-        yield return new WaitForSeconds(0.8f);
+        yield return new WaitForSeconds(0.6f);
         canSpawn = true;
     }
 
