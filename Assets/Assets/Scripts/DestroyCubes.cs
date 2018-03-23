@@ -11,7 +11,6 @@ public class DestroyCubes : MonoBehaviour {
 
     private void OnCollisionEnter(Collision collision)
     {
-        Debug.Log("Collision Detected");
         Destroy(collision.gameObject);
     }
 }

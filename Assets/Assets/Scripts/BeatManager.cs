@@ -3,19 +3,26 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.Diagnostics;
 
+
 [RequireComponent (typeof(AudioSource), typeof(AudioPreprocessor))]
 public class BeatManager: MonoBehaviour {
+
+    private enum Direction
+    {
+        Left,
+        Right
+    };
 
     public List<GameObject> beatCubes;
     public GameObject spawnLocation;
     public GameObject hitLocation;
     public float timeToReachPlayer = 5.0f;
+    public float timeBetweenBeats = 0.25f;
     public float unitsPerSecond;
-    public float unitsPerFrame;
     public float listenerVolumeValue = 1.0f;
     public float sourceVolumeValue = 1.0f;
 
-    private int[] songBeats;
+    private Beat[] songBeats;
     private int windowNumber = 0;
     private AudioPreprocessor preprocessor;
     private bool canSpawn = true;
@@ -23,6 +30,12 @@ public class BeatManager: MonoBehaviour {
     private float lastX;
     private Stopwatch stopwatch;
     private AudioSource source;
+    private float dist;
+    private float speed;
+    private Direction direction;
+    private float rightmostX = 4.0f;
+    private float leftmostX = -4.0f;
+    private float targetTimeDiff = 0.75f;
 
     private void OnGUI()
     {
@@ -34,9 +47,6 @@ public class BeatManager: MonoBehaviour {
 
     // Use this for initialization
     void Start () {
-        float dist = Vector3.Distance(hitLocation.transform.position, spawnLocation.transform.position);
-        float speed = dist / timeToReachPlayer;
-        unitsPerFrame = Time.deltaTime / speed;
         stopwatch = new Stopwatch();
         beatCubes = new List<GameObject>();
         source = GetComponent<AudioSource>();
@@ -44,7 +54,7 @@ public class BeatManager: MonoBehaviour {
         stopwatch.Start();
         songBeats = preprocessor.ProcessSong(source.clip);
         stopwatch.Stop();
-        UnityEngine.Debug.Log("Stopwatch elapsed: " + stopwatch.Elapsed);
+        UnityEngine.Debug.Log("Song Load Time: " + stopwatch.Elapsed);
         stopwatch.Reset();
         UnityEngine.Debug.Log("Length of beats array " + songBeats.Length);
         UnityEngine.Debug.Log("Song length using length of beat array times window length: " + Mathf.FloorToInt(preprocessor.WindowPositionToTime(songBeats.Length) / 60) + "m" + Mathf.FloorToInt(preprocessor.WindowPositionToTime(songBeats.Length) % 60) + "s");
@@ -54,38 +64,45 @@ public class BeatManager: MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
+        dist = Vector3.Distance(hitLocation.transform.position, spawnLocation.transform.position);
+        speed = dist / timeToReachPlayer;
         //UnityEngine.Debug.Log(stopwatch.Elapsed.Seconds);
         if (source.isPlaying)
         {
             if (source.time + timeToReachPlayer < source.clip.length)
             {
                 windowNumber = preprocessor.TimeToWindowAmount(source.time + timeToReachPlayer);
-                if (songBeats[windowNumber] == 1 && windowNumber > previouslyActivatedWindow && canSpawn)
+                if (songBeats[windowNumber] != null && windowNumber > previouslyActivatedWindow && canSpawn)
                 {
                     GameObject temp = GameObject.CreatePrimitive(PrimitiveType.Cube) as GameObject;
                     float x = 0;
                     float timeDiff = preprocessor.WindowPositionToTime(windowNumber) - preprocessor.WindowPositionToTime(previouslyActivatedWindow);
-                    UnityEngine.Debug.Log(timeDiff);
-                    if (timeDiff < 0.7f)
+                    if (timeDiff > targetTimeDiff)
                     {
-                        if (lastX > -4.0f && lastX < 4.0f)
+                        if (lastX > leftmostX && lastX < rightmostX)
                         {
-                            if(timeDiff < 0.6f)
+                            if (direction == Direction.Left)
                                 x = lastX - 1.0f;
                             else
                                 x = lastX + 1.0f;
                         }
                         else
                         {
-                            if (lastX <= -4.0f)
+                            if (lastX <= leftmostX)
+                            {
                                 x = lastX + 1.0f;
+                                direction = Direction.Right;
+                            }
                             else
+                            {
                                 x = lastX - 1.0f;
+                                direction = Direction.Left;
+                            }
                         }
                     }
                     else
                     {
-                        x = 0;
+                        x = lastX;
                     }
                     temp.transform.position = spawnLocation.transform.position + new Vector3(x, temp.transform.localScale.y * 0.5f, temp.transform.localScale.z * 0.5f);
                     lastX = x;
@@ -102,31 +119,37 @@ public class BeatManager: MonoBehaviour {
         {
             for (int i = 0; i < preprocessor.TimeToWindowAmount(timeToReachPlayer); i += 1)
             {
-                if (songBeats[i] == 1 && i > previouslyActivatedWindow && canSpawn)
+                if (songBeats[i] != null && i > previouslyActivatedWindow && canSpawn)
                 {
                     GameObject temp = GameObject.CreatePrimitive(PrimitiveType.Cube) as GameObject;
                     float x = 0;
                     float timeDiff = preprocessor.WindowPositionToTime(windowNumber) - preprocessor.WindowPositionToTime(previouslyActivatedWindow);
-                    if (timeDiff < 0.7f)
+                    if (timeDiff > targetTimeDiff)
                     {
-                        if (lastX > -4.0f && lastX < 4.0f)
+                        if (lastX > leftmostX && lastX < rightmostX)
                         {
-                            if (timeDiff < 0.6f)
+                            if (direction == Direction.Left)
                                 x = lastX - 1.0f;
                             else
                                 x = lastX + 1.0f;
                         }
                         else
                         {
-                            if (lastX <= -4.0f)
+                            if (lastX <= leftmostX)
+                            {
                                 x = lastX + 1.0f;
+                                direction = Direction.Right;
+                            }
                             else
+                            {
                                 x = lastX - 1.0f;
+                                direction = Direction.Left;
+                            }
                         }
                     }
                     else
                     {
-                        x = 0;
+                        x = lastX;
                     }
                     temp.AddComponent<BoxCollider>();
                     temp.AddComponent<Rigidbody>();
@@ -141,19 +164,19 @@ public class BeatManager: MonoBehaviour {
         }
         foreach (GameObject beatCube in GameObject.FindGameObjectsWithTag("Beat Cube"))
         {
-            beatCube.transform.position += spawnLocation.transform.forward * unitsPerFrame;
+            beatCube.transform.position += spawnLocation.transform.forward * speed * Time.deltaTime;
         }
     }
 
     IEnumerator WaitForNextSpawn()
     {
-        yield return new WaitForSeconds(0.6f);
+        yield return new WaitForSeconds(timeBetweenBeats);
         canSpawn = true;
     }
 
     IEnumerator WaitToPlaySong()
     {
-        yield return new WaitForSeconds(5.0f);
+        yield return new WaitForSeconds(timeToReachPlayer);
         source.Play();
     }
 }

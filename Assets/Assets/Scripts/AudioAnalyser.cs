@@ -155,7 +155,7 @@ public static class AudioAnalyser {
         float[] upperMidrange = new float[upperMidrangeSize];
         float[] presence = new float[presenceSize];
         float[] brilliance = new float[brillianceSize];
-        Debug.Log("Spectrum Length: " + spectrum.Length + "\nLoop from " + (presenceRange + 1) + " to " + brillianceRange);
+
         subBass = BandLoop(spectrum, 1, subBassSize);
         bass = BandLoop(spectrum, subBassSize + 1, bassRange);
         lowMidrange = BandLoop(spectrum, bassRange + 1, lowMidrangeRange);
