@@ -58,8 +58,8 @@ public class BeatManager: MonoBehaviour {
         stopwatch.Reset();
         UnityEngine.Debug.Log("Length of beats array " + songBeats.Length);
         UnityEngine.Debug.Log("Song length using length of beat array times window length: " + Mathf.FloorToInt(preprocessor.WindowPositionToTime(songBeats.Length) / 60) + "m" + Mathf.FloorToInt(preprocessor.WindowPositionToTime(songBeats.Length) % 60) + "s");
-        stopwatch.Start();
         StartCoroutine(WaitToPlaySong());
+        stopwatch.Start();
     }
 	
 	// Update is called once per frame
@@ -69,96 +69,131 @@ public class BeatManager: MonoBehaviour {
         //UnityEngine.Debug.Log(stopwatch.Elapsed.Seconds);
         if (source.isPlaying)
         {
+            stopwatch.Stop();
             if (source.time + timeToReachPlayer < source.clip.length)
             {
                 windowNumber = preprocessor.TimeToWindowAmount(source.time + timeToReachPlayer);
                 if (songBeats[windowNumber] != null && windowNumber > previouslyActivatedWindow && canSpawn)
                 {
-                    GameObject temp = GameObject.CreatePrimitive(PrimitiveType.Cube) as GameObject;
-                    float x = 0;
-                    float timeDiff = preprocessor.WindowPositionToTime(windowNumber) - preprocessor.WindowPositionToTime(previouslyActivatedWindow);
-                    if (timeDiff > targetTimeDiff)
+                    float currentBeat = songBeats[windowNumber].energyValue;
+                    bool bestBeat = true;
+                    for (int i = windowNumber; i <= preprocessor.TimeToWindowAmount(timeBetweenBeats) + windowNumber; i += 1)
                     {
-                        if (lastX > leftmostX && lastX < rightmostX)
+                        if(songBeats[i] != null)
                         {
-                            if (direction == Direction.Left)
-                                x = lastX - 1.0f;
+                            if (songBeats[i].energyValue > currentBeat)
+                            {
+                                UnityEngine.Debug.Log("Not best beat");
+                                bestBeat = false;
+                            }
+                        }
+                    }
+                    if(bestBeat)
+                    {
+                        GameObject temp = GameObject.CreatePrimitive(PrimitiveType.Cube) as GameObject;
+                        float x = 0;
+                        float timeDiff = preprocessor.WindowPositionToTime(windowNumber) - preprocessor.WindowPositionToTime(previouslyActivatedWindow);
+                        if (timeDiff > targetTimeDiff)
+                        {
+                            if (lastX > leftmostX && lastX < rightmostX)
+                            {
+                                if (direction == Direction.Left)
+                                    x = lastX - 1.0f;
+                                else
+                                    x = lastX + 1.0f;
+                            }
                             else
-                                x = lastX + 1.0f;
+                            {
+                                if (lastX <= leftmostX)
+                                {
+                                    x = lastX + 1.0f;
+                                    direction = Direction.Right;
+                                }
+                                else
+                                {
+                                    x = lastX - 1.0f;
+                                    direction = Direction.Left;
+                                }
+                            }
                         }
                         else
                         {
-                            if (lastX <= leftmostX)
-                            {
-                                x = lastX + 1.0f;
-                                direction = Direction.Right;
-                            }
-                            else
-                            {
-                                x = lastX - 1.0f;
-                                direction = Direction.Left;
-                            }
+                            x = lastX;
                         }
+                        temp.transform.position = spawnLocation.transform.position + new Vector3(x, temp.transform.localScale.y * 0.5f, temp.transform.localScale.z * 0.5f);
+                        lastX = x;
+                        temp.AddComponent<BoxCollider>();
+                        temp.AddComponent<Rigidbody>();
+                        temp.tag = "Beat Cube";
+                        canSpawn = false;
+                        previouslyActivatedWindow = windowNumber;
+                        StartCoroutine(WaitForNextSpawn());
                     }
-                    else
-                    {
-                        x = lastX;
-                    }
-                    temp.transform.position = spawnLocation.transform.position + new Vector3(x, temp.transform.localScale.y * 0.5f, temp.transform.localScale.z * 0.5f);
-                    lastX = x;
-                    temp.AddComponent<BoxCollider>();
-                    temp.AddComponent<Rigidbody>();
-                    temp.tag = "Beat Cube";
-                    canSpawn = false;
-                    previouslyActivatedWindow = windowNumber;
-                    StartCoroutine(WaitForNextSpawn());
+                    
                 }
             }
         }
         else
         {
-            for (int i = 0; i < preprocessor.TimeToWindowAmount(timeToReachPlayer); i += 1)
+            if(stopwatch.IsRunning)
             {
-                if (songBeats[i] != null && i > previouslyActivatedWindow && canSpawn)
+                windowNumber = preprocessor.TimeToWindowAmount((float)stopwatch.Elapsed.TotalSeconds);
+                if (songBeats[windowNumber] != null && windowNumber > previouslyActivatedWindow && canSpawn)
                 {
-                    GameObject temp = GameObject.CreatePrimitive(PrimitiveType.Cube) as GameObject;
-                    float x = 0;
-                    float timeDiff = preprocessor.WindowPositionToTime(windowNumber) - preprocessor.WindowPositionToTime(previouslyActivatedWindow);
-                    if (timeDiff > targetTimeDiff)
+                    float currentBeat = songBeats[windowNumber].energyValue;
+                    bool bestBeat = true;
+                    for (int j = windowNumber; j <= preprocessor.TimeToWindowAmount(timeBetweenBeats) + windowNumber; j += 1)
                     {
-                        if (lastX > leftmostX && lastX < rightmostX)
+                        if (songBeats[j] != null)
                         {
-                            if (direction == Direction.Left)
-                                x = lastX - 1.0f;
+                            if (songBeats[j].energyValue > currentBeat)
+                            {
+                                UnityEngine.Debug.Log("Not best beat");
+                                bestBeat = false;
+                            }
+                        }
+                    }
+                    if (bestBeat)
+                    {
+                        GameObject temp = GameObject.CreatePrimitive(PrimitiveType.Cube) as GameObject;
+                        float x = 0;
+                        float timeDiff = preprocessor.WindowPositionToTime(windowNumber) - preprocessor.WindowPositionToTime(previouslyActivatedWindow);
+                        if (timeDiff > targetTimeDiff)
+                        {
+                            if (lastX > leftmostX && lastX < rightmostX)
+                            {
+                                if (direction == Direction.Left)
+                                    x = lastX - 1.0f;
+                                else
+                                    x = lastX + 1.0f;
+                            }
                             else
-                                x = lastX + 1.0f;
+                            {
+                                if (lastX <= leftmostX)
+                                {
+                                    x = lastX + 1.0f;
+                                    direction = Direction.Right;
+                                }
+                                else
+                                {
+                                    x = lastX - 1.0f;
+                                    direction = Direction.Left;
+                                }
+                            }
                         }
                         else
                         {
-                            if (lastX <= leftmostX)
-                            {
-                                x = lastX + 1.0f;
-                                direction = Direction.Right;
-                            }
-                            else
-                            {
-                                x = lastX - 1.0f;
-                                direction = Direction.Left;
-                            }
+                            x = lastX;
                         }
+                        temp.AddComponent<BoxCollider>();
+                        temp.AddComponent<Rigidbody>();
+                        temp.transform.position = spawnLocation.transform.position + new Vector3(x, temp.transform.localScale.y * 0.5f, preprocessor.WindowPositionToTime(windowNumber) + (temp.transform.localScale.z * 0.5f));
+                        lastX = x;
+                        temp.tag = "Beat Cube";
+                        canSpawn = false;
+                        previouslyActivatedWindow = windowNumber;
+                        StartCoroutine(WaitForNextSpawn());
                     }
-                    else
-                    {
-                        x = lastX;
-                    }
-                    temp.AddComponent<BoxCollider>();
-                    temp.AddComponent<Rigidbody>();
-                    temp.transform.position = spawnLocation.transform.position + new Vector3(x, temp.transform.localScale.y * 0.5f, preprocessor.WindowPositionToTime(i) + (temp.transform.localScale.z * 0.5f));
-                    lastX = x;
-                    temp.tag = "Beat Cube";
-                    canSpawn = false;
-                    previouslyActivatedWindow = windowNumber;
-                    StartCoroutine(WaitForNextSpawn());
                 }
             }
         }

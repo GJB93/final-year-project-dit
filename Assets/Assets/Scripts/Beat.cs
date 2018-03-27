@@ -40,5 +40,13 @@ public class Beat {
         this.energyPerBand = energyPerBand;
         this.averagePerBand = averagePerBand;
         this.beatTargetPerBand = beatTargetPerBand;
+
+        energyValue = 0;
+        for (int i = 0; i < energyPerBand.Length; i += 1)
+        {
+            energyValue += energyPerBand[i];
+        }
+
+        energyValue /= energyPerBand.Length;
     }
 }
