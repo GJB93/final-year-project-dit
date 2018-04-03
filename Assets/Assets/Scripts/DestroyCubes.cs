@@ -4,13 +4,14 @@ using UnityEngine;
 
 public class DestroyCubes : MonoBehaviour {
 
-	// Use this for initialization
-	void Start () {
-		
-	}
-
     private void OnCollisionEnter(Collision collision)
     {
-        Destroy(collision.gameObject);
+        if (collision.gameObject.tag.Equals("Beat Cube"))
+        {
+            Debug.Log("Cube was missed");
+            Camera.main.GetComponent<BeatManager>().BreakHitStreak();
+            Destroy(collision.gameObject);
+        }
+            
     }
 }

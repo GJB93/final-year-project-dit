@@ -31,6 +31,7 @@ public class GenerateMesh : MonoBehaviour {
     private float height;
     private float previousY = 0;
     private float[] spectrum;
+    private float[] samples;
     private AudioSource source;
     private List<float> bands;
 
@@ -84,8 +85,8 @@ public class GenerateMesh : MonoBehaviour {
             
         }
         mesh.vertices = vertices;
-        mesh.RecalculateBounds();
         mesh.RecalculateNormals();
+        mesh.RecalculateBounds();
     }
 
     private void Generate()

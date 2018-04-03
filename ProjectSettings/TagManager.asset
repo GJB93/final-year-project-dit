@@ -4,14 +4,10 @@
 TagManager:
   serializedVersion: 2
   tags:
-  - pickupAble
-  - bullet
-  - floor
-  - wall
-  - Fader
-  - dontmove
-  - listlast
+  - FxTemporaire
+  - projectile
   - Beat Cube
+  - sword
   layers:
   - Default
   - TransparentFX
@@ -21,16 +17,16 @@ TagManager:
   - UI
   - 
   - 
-  - NoFadeOut
-  - ColliderGrid
-  - Gazable
-  - Player
-  - LitStairs1
-  - LitStairs2
-  - Wall
-  - TeleportPoints
-  - DemoUI
-  - Toys
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
   - 
   - 
   - 

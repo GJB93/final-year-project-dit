@@ -29,7 +29,7 @@ public static class AudioAnalyser {
         return Mathf.Sqrt(sum / SAMPLE_SIZE);
     }
 
-    public static float GetDBValue(float[] samples, float measuredVoltage, float referenceVoltage)
+    public static float GetDBValue(float[] samples)
     {
         return 20 * Mathf.Log10(GetRmsValue(samples) / 0.1f);
     }
