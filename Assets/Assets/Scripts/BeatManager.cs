@@ -278,7 +278,7 @@ public class BeatManager: MonoBehaviour {
             hitMissText.GetComponent<TextMesh>().text = "Hit! +" + (scoreIncrement * multiplier);
             hitMissText.GetComponent<TextMesh>().color = Color.green;
             StartCoroutine(ConfirmTextTimeout());
-            syncCheck = false;
+            StartCoroutine(CollisionTimeout());
         }
         return;
         
@@ -300,5 +300,11 @@ public class BeatManager: MonoBehaviour {
     {
         yield return new WaitForSeconds(0.35f);
         hitMissText.SetActive(false);
+    }
+
+    IEnumerator CollisionTimeout()
+    {
+        yield return new WaitForSeconds(0.1f);
+        syncCheck = false;
     }
 }
