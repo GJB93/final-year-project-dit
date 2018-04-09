@@ -25,6 +25,7 @@ public class BeatManager: MonoBehaviour {
     public float unitsPerSecond;
     public float listenerVolumeValue = 1.0f;
     public float sourceVolumeValue = 1.0f;
+    public bool songLoaded = false;
 
     private Beat[] songBeats;
     private int windowNumber = 0;
@@ -51,6 +52,7 @@ public class BeatManager: MonoBehaviour {
     private int hitCount = 0;
     private int hitStreak = 0;
     private bool syncCheck = false;
+    private float currentBeat;
 
     private void OnGUI()
     {
@@ -98,62 +100,7 @@ public class BeatManager: MonoBehaviour {
                 if (source.time + timeToReachPlayer < source.clip.length)
                 {
                     windowNumber = preprocessor.TimeToWindowAmount(source.time + timeToReachPlayer);
-                    if (songBeats[windowNumber] != null && windowNumber > previouslyActivatedWindow && canSpawn)
-                    {
-                        float currentBeat = songBeats[windowNumber].energyValue;
-                        bool bestBeat = true;
-                        for (int i = windowNumber; i <= preprocessor.TimeToWindowAmount(timeBetweenBeats) + windowNumber; i += 1)
-                        {
-                            if (songBeats[i] != null)
-                            {
-                                if (songBeats[i].energyValue > currentBeat)
-                                {
-                                    UnityEngine.Debug.Log("Not best beat");
-                                    bestBeat = false;
-                                }
-                            }
-                        }
-                        if (bestBeat)
-                        {
-                            GameObject temp = Instantiate(beatCube);
-                            float x = 0;
-                            float timeDiff = preprocessor.WindowPositionToTime(windowNumber) - preprocessor.WindowPositionToTime(previouslyActivatedWindow);
-                            if (timeDiff > targetTimeDiff)
-                            {
-                                if (lastX > leftmostX && lastX < rightmostX)
-                                {
-                                    if (direction == Direction.Left)
-                                        x = lastX - 1.0f;
-                                    else
-                                        x = lastX + 1.0f;
-                                }
-                                else
-                                {
-                                    if (lastX <= leftmostX)
-                                    {
-                                        x = lastX + 1.0f;
-                                        direction = Direction.Right;
-                                    }
-                                    else
-                                    {
-                                        x = lastX - 1.0f;
-                                        direction = Direction.Left;
-                                    }
-                                }
-                            }
-                            else
-                            {
-                                x = lastX;
-                            }
-                            temp.transform.position = spawnLocation.transform.position + new Vector3(x, temp.transform.localScale.y * 0.5f, temp.transform.localScale.z * 0.5f);
-                            lastX = x;
-                            temp.GetComponent<Renderer>().material.color = Random.ColorHSV(0, 1, 0, 0.25f, 1, 1);
-                            canSpawn = false;
-                            previouslyActivatedWindow = windowNumber;
-                            StartCoroutine(WaitForNextSpawn());
-                        }
-
-                    }
+                    SpawnCubes();
                 }
             }
             else
@@ -161,65 +108,16 @@ public class BeatManager: MonoBehaviour {
                 if (stopwatch.IsRunning && songBeats != null)
                 {
                     windowNumber = preprocessor.TimeToWindowAmount((float)stopwatch.Elapsed.TotalSeconds);
-                    if (songBeats[windowNumber] != null && windowNumber > previouslyActivatedWindow && canSpawn)
-                    {
-                        float currentBeat = songBeats[windowNumber].energyValue;
-                        bool bestBeat = true;
-                        for (int j = windowNumber; j <= preprocessor.TimeToWindowAmount(timeBetweenBeats) + windowNumber; j += 1)
-                        {
-                            if (songBeats[j] != null)
-                            {
-                                if (songBeats[j].energyValue > currentBeat)
-                                {
-                                    UnityEngine.Debug.Log("Not best beat");
-                                    bestBeat = false;
-                                }
-                            }
-                        }
-                        if (bestBeat)
-                        {
-                            GameObject temp = Instantiate(beatCube);
-                            float x = 0;
-                            float timeDiff = preprocessor.WindowPositionToTime(windowNumber) - preprocessor.WindowPositionToTime(previouslyActivatedWindow);
-                            if (timeDiff > targetTimeDiff)
-                            {
-                                if (lastX > leftmostX && lastX < rightmostX)
-                                {
-                                    if (direction == Direction.Left)
-                                        x = lastX - 1.0f;
-                                    else
-                                        x = lastX + 1.0f;
-                                }
-                                else
-                                {
-                                    if (lastX <= leftmostX)
-                                    {
-                                        x = lastX + 1.0f;
-                                        direction = Direction.Right;
-                                    }
-                                    else
-                                    {
-                                        x = lastX - 1.0f;
-                                        direction = Direction.Left;
-                                    }
-                                }
-                            }
-                            else
-                            {
-                                x = lastX;
-                            }
-                            temp.transform.position = spawnLocation.transform.position + new Vector3(x, temp.transform.localScale.y * 0.5f, preprocessor.WindowPositionToTime(windowNumber) + (temp.transform.localScale.z * 0.5f));
-                            lastX = x;
-                            temp.GetComponent<Renderer>().material.color = Random.ColorHSV(0, 1, 0, 0.25f, 1, 1);
-                            canSpawn = false;
-                            previouslyActivatedWindow = windowNumber;
-                            StartCoroutine(WaitForNextSpawn());
-                        }
-                    }
+                    SpawnCubes();
                 }
                 else
                 {
-                    StartCoroutine(WaitToPlaySong());
+                    if(songLoaded)
+                    {
+                        StartCoroutine(WaitToPlaySong());
+                        songLoaded = false;
+                    }
+                    
                 }
             }
         }
@@ -249,13 +147,75 @@ public class BeatManager: MonoBehaviour {
 
     void LoadSong()
     {
+        songLoaded = false;
         stopwatch.Start();
         songBeats = preprocessor.ProcessSong(clip, samples, songFrequency, songSampleNum, songChannels);
         stopwatch.Stop();
         UnityEngine.Debug.Log("Song Load Time: " + stopwatch.Elapsed);
         stopwatch.Reset();
         UnityEngine.Debug.Log("Length of beats array " + songBeats.Length);
-        UnityEngine.Debug.Log("Song length using length of beat array times window length: " + Mathf.FloorToInt(preprocessor.WindowPositionToTime(songBeats.Length) / 60) + "m" + Mathf.FloorToInt(preprocessor.WindowPositionToTime(songBeats.Length) % 60) + "s"); 
+        UnityEngine.Debug.Log("Song length using length of beat array times window length: " + Mathf.FloorToInt(preprocessor.WindowPositionToTime(songBeats.Length) / 60) + "m" + Mathf.FloorToInt(preprocessor.WindowPositionToTime(songBeats.Length) % 60) + "s");
+        songLoaded = true;
+    }
+
+    void SpawnCubes()
+    {
+        if (songBeats[windowNumber] != null && windowNumber > previouslyActivatedWindow && canSpawn)
+        {
+            currentBeat = songBeats[windowNumber].energyValue;
+            bool bestBeat = true;
+            for (int i = windowNumber; i <= preprocessor.TimeToWindowAmount(timeBetweenBeats) + windowNumber; i += 1)
+            {
+                if (songBeats[i] != null)
+                {
+                    if (songBeats[i].energyValue > currentBeat)
+                    {
+                        UnityEngine.Debug.Log("Not best beat");
+                        bestBeat = false;
+                    }
+                }
+            }
+            if (bestBeat)
+            {
+                GameObject temp = Instantiate(beatCube);
+                float x = 0;
+                float timeDiff = preprocessor.WindowPositionToTime(windowNumber) - preprocessor.WindowPositionToTime(previouslyActivatedWindow);
+                if (timeDiff > targetTimeDiff)
+                {
+                    if (lastX > leftmostX && lastX < rightmostX)
+                    {
+                        if (direction == Direction.Left)
+                            x = lastX - 1.0f;
+                        else
+                            x = lastX + 1.0f;
+                    }
+                    else
+                    {
+                        if (lastX <= leftmostX)
+                        {
+                            x = lastX + 1.0f;
+                            direction = Direction.Right;
+                        }
+                        else
+                        {
+                            x = lastX - 1.0f;
+                            direction = Direction.Left;
+                        }
+                    }
+                }
+                else
+                {
+                    x = lastX;
+                }
+                temp.transform.position = spawnLocation.transform.position + new Vector3(x, temp.transform.localScale.y * 0.5f, temp.transform.localScale.z * 0.5f);
+                lastX = x;
+                temp.GetComponent<Renderer>().material.color = Random.ColorHSV(0, 1, 0, 0.25f, 1, 1);
+                canSpawn = false;
+                previouslyActivatedWindow = windowNumber;
+                StartCoroutine(WaitForNextSpawn());
+            }
+
+        }
     }
 
     public void UpdateScore()

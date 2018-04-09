@@ -69,7 +69,7 @@ public class AudioPreprocessor : MonoBehaviour {
                     bandVariances.Add(new float[historyBufferLength]);
                 }
             }
-            beatTrack[i] = CheckForBeatBands(bands, bands);
+            beatTrack[i] = CheckForBeatBands(bands, null);
             if (beatTrack[i] != null)
             {
                 beatTrack[i].windowNumber = i;
@@ -168,7 +168,10 @@ public class AudioPreprocessor : MonoBehaviour {
         int beatNum = 0;
         for(int i = 0; i < rightChannel.Count; i += 1)
         {
-            instantEnergies[i] = AudioAnalyser.GetInstantEnergy(rightChannel.ElementAt(i), leftChannel.ElementAt(i));
+            if(leftChannel != null)
+                instantEnergies[i] = AudioAnalyser.GetInstantEnergy(rightChannel.ElementAt(i), leftChannel.ElementAt(i));
+            else
+                instantEnergies[i] = AudioAnalyser.GetInstantEnergy(rightChannel.ElementAt(i), null);
 
             float[] shiftArray = new float[historyBufferLength];
             Array.Copy(energyHistories.ElementAt(i), 0, shiftArray, 1, historyBufferLength - 1);
@@ -188,7 +191,7 @@ public class AudioPreprocessor : MonoBehaviour {
             //Debug.Log("Instant Energy: " + instantEnergies[i] + "\nAverage Energy: " + averageEnergies[i] + "\nEnergy Constant: " + constant + "\nBeat target: " + beatEnergyTarget + "\nVariance: " + variance);
             //if (instantEnergies[i] > beatEnergyTarget)
             float averageVariance = bandVariances.ElementAt(i).Average();
-            if (variance > averageVariance)
+            if (variance > averageVariance && instantEnergies[i] > beatEnergyTarget)
             {
                 //Debug.Log("Instant Energy: " + instantEnergies[i] + "\nAverage Energy: " + averageEnergies[i] + "\nEnergy Constant: " + constant + "\nBeat target: " + beatEnergyTarget);
                 Debug.Log("Variance: " + variance + "\nAverage Variance: " + averageVariance + "\nTest Value: " + energyHistories.ElementAt(i).Average());
