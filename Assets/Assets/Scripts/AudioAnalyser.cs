@@ -68,9 +68,14 @@ public static class AudioAnalyser {
         for (int i = 0; i < rightChannel.Length; i += 1)
         {
             if (leftChannel != null)
+            {
                 instantEnergy += (rightChannel[i] * rightChannel[i]) + (leftChannel[i] * leftChannel[i]);
+            }
             else
+            {
                 instantEnergy += (rightChannel[i] * rightChannel[i]);
+            }
+                
         }
         return instantEnergy;
     }

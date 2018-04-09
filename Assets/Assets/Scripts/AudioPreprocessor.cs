@@ -169,10 +169,14 @@ public class AudioPreprocessor : MonoBehaviour {
         for(int i = 0; i < rightChannel.Count; i += 1)
         {
             if(leftChannel != null)
+            {
                 instantEnergies[i] = AudioAnalyser.GetInstantEnergy(rightChannel.ElementAt(i), leftChannel.ElementAt(i));
+            }
             else
+            {
                 instantEnergies[i] = AudioAnalyser.GetInstantEnergy(rightChannel.ElementAt(i), null);
-
+            }
+                
             float[] shiftArray = new float[historyBufferLength];
             Array.Copy(energyHistories.ElementAt(i), 0, shiftArray, 1, historyBufferLength - 1);
             shiftArray[0] = instantEnergies[i];
