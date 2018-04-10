@@ -1747,13 +1747,13 @@ Transform:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 1834160269}
-  m_LocalRotation: {x: -0.17364825, y: 0, z: 0, w: 0.9848078}
-  m_LocalPosition: {x: 0, y: 3, z: 7}
+  m_LocalRotation: {x: -0.08715578, y: 0, z: 0, w: 0.9961947}
+  m_LocalPosition: {x: 0, y: 2, z: 7}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 2010981113}
   m_RootOrder: 1
-  m_LocalEulerAnglesHint: {x: -20, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: -10, y: 0, z: 0}
 --- !u!102 &1834160271
 TextMesh:
   serializedVersion: 3
@@ -2057,6 +2057,7 @@ MonoBehaviour:
   unitsPerSecond: 2
   listenerVolumeValue: 1
   sourceVolumeValue: 1
+  songLoaded: 0
 --- !u!114 &2010981109
 MonoBehaviour:
   m_ObjectHideFlags: 0

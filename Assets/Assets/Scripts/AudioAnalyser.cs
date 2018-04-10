@@ -137,8 +137,6 @@ public static class AudioAnalyser {
          * Brilliance =         6kHz - 20kHz        => 14kHz bandwidth
          */
 
-        List<float[]> bands = new List<float[]>();
-
         float hzPerInterval = GetHzPerInterval(sampleRate, sampleSize);
 
         int subBassSize = Mathf.CeilToInt(40 / hzPerInterval);
@@ -148,6 +146,8 @@ public static class AudioAnalyser {
         int upperMidrangeSize = Mathf.CeilToInt(2000 / hzPerInterval);
         int presenceSize = Mathf.CeilToInt(2000 / hzPerInterval);
         int brillianceSize = Mathf.CeilToInt(14000 / hzPerInterval);
+
+        List<float[]> bands = new List<float[]>();
         
         int bassRange = bassSize + subBassSize;
         int lowMidrangeRange = lowMidrangeSize + bassSize;
@@ -185,81 +185,23 @@ public static class AudioAnalyser {
 
     public static List<float> GetBandAverages(float[] spectrum, float sampleRate, float sampleSize)
     {
-        /*
-         * Sub-Bass:            20Hz - 60Hz         => 40Hz bandwidth
-         * Bass:                60Hz - 250Hz        => 190Hz bandwidth
-         * Low Midrange =       250Hz - 500Hz       => 250Hz bandwidth
-         * Midrange =           500Hz - 2kHz        => 1.5kHz bandwidth
-         * Upper Midrange =     2kHz - 4kHz         => 2kHz bandwidth
-         * Presence =           4kHz - 6kHz         => 2kHz bandwidth
-         * Brilliance =         6kHz - 20kHz        => 14kHz bandwidth
-         */
-
+        List<float[]> temp = GetDistinctBands(spectrum, sampleRate, sampleSize);
         List<float> averages = new List<float>();
 
-        List<float> subBass = new List<float>();
-        List<float> bass = new List<float>();
-        List<float> lowMidrange = new List<float>();
-        List<float> midrange = new List<float>();
-        List<float> upperMidrange = new List<float>();
-        List<float> presence = new List<float>();
-        List<float> brilliance = new List<float>();
-
-        float hzPerInterval = GetHzPerInterval(sampleRate, sampleSize);
-
-        int subBassRange = Mathf.CeilToInt(40 / hzPerInterval);
-        int bassRange = Mathf.CeilToInt(190 / hzPerInterval) + subBassRange;
-        int lowMidrangeRange = Mathf.CeilToInt(250 / hzPerInterval) + bassRange;
-        int midrangeRange = Mathf.CeilToInt(1500 / hzPerInterval) + lowMidrangeRange;
-        int upperMidrangeRange = Mathf.CeilToInt(2000 / hzPerInterval) + midrangeRange;
-        int presenceRange = Mathf.CeilToInt(2000 / hzPerInterval) + upperMidrangeRange;
-        int brillianceRange = Mathf.CeilToInt(14000 / hzPerInterval) + presenceRange;
-
-        for (int interval = 1; interval <= brillianceRange; interval += 1)
+        for (int i = 0; i < temp.Count; i += 1)
         {
-            if (interval <= subBassRange)
-            {
-                subBass.Add(spectrum[interval]);
-            }
-            else if (interval > subBassRange && interval <= bassRange)
-            {
-                bass.Add(spectrum[interval]);
-            }
-            else if (interval > bassRange && interval <= lowMidrangeRange)
-            {
-                lowMidrange.Add(spectrum[interval]);
-            }
-            else if (interval > lowMidrangeRange && interval <= midrangeRange)
-            {
-                midrange.Add(spectrum[interval]);
-            }
-            else if (interval > midrangeRange && interval <= upperMidrangeRange)
-            {
-                upperMidrange.Add(spectrum[interval]);
-            }
-            else if (interval > upperMidrangeRange && interval <= presenceRange)
-            {
-                presence.Add(spectrum[interval]);
-            }
-            else
-            {
-                brilliance.Add(spectrum[interval]);
-            }
+            averages.Add(temp.ElementAt(i).Average());
         }
-
-        averages.Add(subBass.Average());
-        averages.Add(bass.Average());
-        averages.Add(lowMidrange.Average());
-        averages.Add(midrange.Average());
-        averages.Add(upperMidrange.Average());
-        averages.Add(presence.Average());
-        averages.Add(brilliance.Average());
 
         return averages;
     }
 
     private static float GetHzPerInterval(float sampleRate, float sampleSize)
     {
+        /*
+         * Assuming a common song Nyquist frequency of ~22kHz
+         * 22000 / 1024 = 21.5 Hz an interval
+         */
         float songMaxFrequency = sampleRate / 2;
         return songMaxFrequency / sampleSize;
     }

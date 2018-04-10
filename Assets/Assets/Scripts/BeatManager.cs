@@ -149,7 +149,7 @@ public class BeatManager: MonoBehaviour {
     {
         songLoaded = false;
         stopwatch.Start();
-        songBeats = preprocessor.ProcessSong(clip, samples, songFrequency, songSampleNum, songChannels);
+        songBeats = preprocessor.ProcessSong(samples, songFrequency, songSampleNum, songChannels);
         stopwatch.Stop();
         UnityEngine.Debug.Log("Song Load Time: " + stopwatch.Elapsed);
         stopwatch.Reset();
