@@ -52,6 +52,7 @@ public class BeatManager: MonoBehaviour {
     private int hitCount = 0;
     private int hitStreak = 0;
     private bool syncCheck = false;
+    private float stepAmount = 1.0f;
     private float currentBeat;
 
     private void OnGUI()
@@ -84,7 +85,6 @@ public class BeatManager: MonoBehaviour {
         preprocessor = GetComponent<AudioPreprocessor>();
         preprocessingThread = new Thread(LoadSong);
         preprocessingThread.Start();
-        //LoadSong();
     }
 
     // Update is called once per frame
@@ -93,7 +93,6 @@ public class BeatManager: MonoBehaviour {
         {
             dist = Vector3.Distance(beatLocation.transform.position, spawnLocation.transform.position);
             speed = dist / timeToReachPlayer;
-            //UnityEngine.Debug.Log(stopwatch.Elapsed.Seconds);
             if (source.isPlaying && songBeats != null)
             {
                 stopwatch.Stop();
@@ -154,7 +153,9 @@ public class BeatManager: MonoBehaviour {
         UnityEngine.Debug.Log("Song Load Time: " + stopwatch.Elapsed);
         stopwatch.Reset();
         UnityEngine.Debug.Log("Length of beats array " + songBeats.Length);
-        UnityEngine.Debug.Log("Song length using length of beat array times window length: " + Mathf.FloorToInt(preprocessor.WindowPositionToTime(songBeats.Length) / 60) + "m" + Mathf.FloorToInt(preprocessor.WindowPositionToTime(songBeats.Length) % 60) + "s");
+        UnityEngine.Debug.Log("Song length using length of beat array times window length: " + 
+            Mathf.FloorToInt(preprocessor.WindowPositionToTime(songBeats.Length) / 60) + "m" + 
+            Mathf.FloorToInt(preprocessor.WindowPositionToTime(songBeats.Length) % 60) + "s");
         songLoaded = true;
     }
 
@@ -172,6 +173,7 @@ public class BeatManager: MonoBehaviour {
                     {
                         UnityEngine.Debug.Log("Not best beat");
                         bestBeat = false;
+                        break;
                     }
                 }
             }
@@ -185,20 +187,20 @@ public class BeatManager: MonoBehaviour {
                     if (lastX > leftmostX && lastX < rightmostX)
                     {
                         if (direction == Direction.Left)
-                            x = lastX - 1.0f;
+                            x = lastX - stepAmount;
                         else
-                            x = lastX + 1.0f;
+                            x = lastX + stepAmount;
                     }
                     else
                     {
                         if (lastX <= leftmostX)
                         {
-                            x = lastX + 1.0f;
+                            x = lastX + stepAmount;
                             direction = Direction.Right;
                         }
                         else
                         {
-                            x = lastX - 1.0f;
+                            x = lastX - stepAmount;
                             direction = Direction.Left;
                         }
                     }

@@ -79,10 +79,10 @@ public class AudioPreprocessor : MonoBehaviour {
     private Beat[] ProcessStereo(float[] samples, int numOfSamples, int frequency)
     {
         Debug.Log("Processing Stereo Song");
+
         float[] rightSamples = new float[numOfSamples];
         float[] leftSamples = new float[numOfSamples];
-        Debug.Log(numOfSamples);
-        for (int i = 0; i < rightSamples.Length; i += 1)
+        for (int i = 0; i < numOfSamples; i += 1)
         {
             rightSamples[i] = samples[i * 2];
             leftSamples[i] = samples[(i * 2) + 1];
