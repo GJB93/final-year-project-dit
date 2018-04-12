@@ -18,12 +18,14 @@ public class SwordToCube : MonoBehaviour {
             
             if (visualEffect != null)
             {
+                // Code snippet from https://unity3d.com/learn/tutorials/topics/graphics/creating-sparks-particle-trails
                 foreach (ContactPoint contact in collision.contacts)
                 {
                     Instantiate(visualEffect, contact.point, Quaternion.identity);
                 }
+                //End of snippet
             }
-            collision.gameObject.tag = "";
+            collision.gameObject.tag = "Untagged";
             Debug.Log("Cube has been hit by sword");
             Camera.main.GetComponent<BeatManager>().UpdateScore();
             Destroy(collision.gameObject.GetComponent<Collider>());

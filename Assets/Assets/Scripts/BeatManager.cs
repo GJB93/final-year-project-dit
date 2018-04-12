@@ -26,6 +26,10 @@ public class BeatManager: MonoBehaviour {
     public float listenerVolumeValue = 1.0f;
     public float sourceVolumeValue = 1.0f;
     public bool songLoaded = false;
+    public int scoreIncrement = 100;
+    public int hitsPerMultiplier = 10;
+    public int minMultiplier = 1;
+    public int maxMultiplier = 4;
 
     private Beat[] songBeats;
     private int windowNumber = 0;
@@ -54,6 +58,9 @@ public class BeatManager: MonoBehaviour {
     private bool syncCheck = false;
     private float stepAmount = 1.0f;
     private float currentBeat;
+    private float halfMultiplier = 0.5f;
+    private float collisionTimeout = 0.1f;
+    private float textTimeout = 0.35f;
 
     private void OnGUI()
     {
@@ -209,8 +216,9 @@ public class BeatManager: MonoBehaviour {
                 {
                     x = lastX;
                 }
-                temp.transform.position = spawnLocation.transform.position + new Vector3(x, temp.transform.localScale.y * 0.5f, temp.transform.localScale.z * 0.5f);
+                temp.transform.position = spawnLocation.transform.position + new Vector3(x, temp.transform.localScale.y * halfMultiplier, temp.transform.localScale.z * halfMultiplier);
                 lastX = x;
+                // These HSV values will generate pastel-style colours
                 temp.GetComponent<Renderer>().material.color = Random.ColorHSV(0, 1, 0, 0.25f, 1, 1);
                 canSpawn = false;
                 previouslyActivatedWindow = windowNumber;
@@ -226,12 +234,11 @@ public class BeatManager: MonoBehaviour {
         {
             syncCheck = true;
             UnityEngine.Debug.Log("Increasing Score");
-            int scoreIncrement = 100;
             hitCount += 1;
             hitStreak += 1;
-            if (hitStreak / 10 > 0 && hitStreak / 10 < 4)
+            if (hitStreak / hitsPerMultiplier > 0 && hitStreak / hitsPerMultiplier < maxMultiplier)
             {
-                multiplier = (hitStreak / 10) + 1;
+                multiplier = (hitStreak / hitsPerMultiplier) + minMultiplier;
             }
             currentScore += scoreIncrement * multiplier;
 
@@ -250,7 +257,7 @@ public class BeatManager: MonoBehaviour {
     {
         UnityEngine.Debug.Log("Breaking Streak");
         hitStreak = 0;
-        multiplier = 1;
+        multiplier = minMultiplier;
         score.GetComponent<TextMesh>().text = "Score: " + currentScore + "\nMultiplier: " + multiplier + "\nHit Count: " + hitCount + "\nHit Streak: " + hitStreak;
         hitMissText.SetActive(true);
         hitMissText.GetComponent<TextMesh>().text = "Miss!";
@@ -260,13 +267,13 @@ public class BeatManager: MonoBehaviour {
 
     IEnumerator ConfirmTextTimeout()
     {
-        yield return new WaitForSeconds(0.35f);
+        yield return new WaitForSeconds(textTimeout);
         hitMissText.SetActive(false);
     }
 
     IEnumerator CollisionTimeout()
     {
-        yield return new WaitForSeconds(0.1f);
+        yield return new WaitForSeconds(collisionTimeout);
         syncCheck = false;
     }
 }

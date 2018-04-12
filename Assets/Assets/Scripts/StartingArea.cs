@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
+// Script was developed using functionality discussed in this
+// StackOverflow thread https://stackoverflow.com/questions/40014574/loading-new-scene-in-background
+
 public class StartingArea : MonoBehaviour {
 
     private bool loadingStarted = false;

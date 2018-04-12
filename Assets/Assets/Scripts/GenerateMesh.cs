@@ -19,8 +19,8 @@ public class GenerateMesh : MonoBehaviour {
     public float zInterval;
     public float xInterval;
     public Orientation orientation;
-    public float risingVisualiserSmoothSpeed = 0.5f;
-    public float fallingVisualiserSmoothSpeed = 0.5f;
+    public float risingSmoothSpeed = 0.5f;
+    public float fallingSmoothSpeed = 0.5f;
 
     private Vector3[] vertices;
     private float[] eqBandPreviousY;
@@ -34,6 +34,7 @@ public class GenerateMesh : MonoBehaviour {
     private float[] samples;
     private AudioSource source;
     private List<float> bands;
+    private float scaleMultiplier = 100;
 
     private void Awake()
     {
@@ -64,12 +65,15 @@ public class GenerateMesh : MonoBehaviour {
                     float risingInterpolater = 0;
                     float fallingInterpolator = 0;
                     float interpolation = 0;
-                    float scaleY = bands.ElementAt(((int)meshDepth - 1) - (int)x) * 100;
-                    risingInterpolater += Time.deltaTime * risingVisualiserSmoothSpeed;
-                    fallingInterpolator += Time.deltaTime * fallingVisualiserSmoothSpeed;
-                    interpolation = scaleY > previousY ? Mathf.Lerp(eqBandPreviousY[((int)meshDepth - 1) - (int)x], scaleY, risingInterpolater) : Mathf.Lerp(eqBandPreviousY[((int)meshDepth - 1) - (int)x], eqBandPreviousY[((int)meshDepth - 1) - (int)x] * 0.8f, fallingInterpolator);
+                    int reverseArrayPosition = ((int)meshDepth - 1) - (int)x;
+                    float scaleY = bands.ElementAt(reverseArrayPosition) * scaleMultiplier;
+                    
+                    risingInterpolater += Time.deltaTime * risingSmoothSpeed;
+                    fallingInterpolator += Time.deltaTime * fallingSmoothSpeed;
+                    interpolation = scaleY > previousY ? Mathf.Lerp(eqBandPreviousY[reverseArrayPosition], scaleY, risingInterpolater) 
+                                                       : Mathf.Lerp(eqBandPreviousY[reverseArrayPosition], eqBandPreviousY[reverseArrayPosition] * 0.8f, fallingInterpolator);
                     height = interpolation;
-                    eqBandPreviousY[((int)meshDepth - 1) - (int)x] = interpolation;
+                    eqBandPreviousY[reverseArrayPosition] = interpolation;
                 }
 
                 if (orientation == Orientation.Left)

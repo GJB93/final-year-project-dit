@@ -712,8 +712,8 @@ MonoBehaviour:
   zInterval: 1
   xInterval: 1
   orientation: 1
-  risingVisualiserSmoothSpeed: 0.5
-  fallingVisualiserSmoothSpeed: 0.5
+  risingSmoothSpeed: 0.5
+  fallingSmoothSpeed: 0.5
 --- !u!4 &549260346
 Transform:
   m_ObjectHideFlags: 0
@@ -1017,8 +1017,8 @@ MonoBehaviour:
   zInterval: 1
   xInterval: 1
   orientation: 0
-  risingVisualiserSmoothSpeed: 0.5
-  fallingVisualiserSmoothSpeed: 0.5
+  risingSmoothSpeed: 0.5
+  fallingSmoothSpeed: 0.5
 --- !u!4 &917802992
 Transform:
   m_ObjectHideFlags: 0
@@ -2058,6 +2058,10 @@ MonoBehaviour:
   listenerVolumeValue: 1
   sourceVolumeValue: 1
   songLoaded: 0
+  scoreIncrement: 100
+  hitsPerMultiplier: 10
+  minMultiplier: 1
+  maxMultiplier: 4
 --- !u!114 &2010981109
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2082,7 +2086,7 @@ AudioSource:
   m_Enabled: 1
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
-  m_audioClip: {fileID: 8300000, guid: 3a128252bee03ac4a9672ff2f8573f66, type: 3}
+  m_audioClip: {fileID: 8300000, guid: d281baa79bc037846b81c95865526742, type: 3}
   m_PlayOnAwake: 0
   m_Volume: 1
   m_Pitch: 1
